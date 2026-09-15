@@ -25,8 +25,10 @@ RUN corepack enable && corepack prepare pnpm@12.3.4 --activate
 WORKDIR /app
 
 COPY --from=builder /app/apps/backend/dist ./apps/backend/dist
+COPY --from=builder /app/packages/db/package.json ./packages/db/package.json
 COPY --from=builder /app/packages/db/dist ./packages/db/dist
 COPY --from=builder /app/packages/db/prisma ./packages/db/prisma
+COPY --from=builder /app/packages/db/prisma.config.ts ./packages/db/prisma.config.ts
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/apps/backend/node_modules ./apps/backend/node_modules
 COPY --from=builder /app/packages/db/node_modules ./packages/db/node_modules

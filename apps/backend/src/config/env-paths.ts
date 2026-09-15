@@ -11,5 +11,5 @@ import path from 'node:path';
  */
 export const envFilePaths = [
   path.resolve(__dirname, '..', '..', '.env'),
-  path.resolve(__dirname, '..', '..', '..', '.env'),
+  path.resolve(__dirname, '..', '..', '..', '..', '.env'),
 ];
