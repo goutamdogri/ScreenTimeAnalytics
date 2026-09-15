@@ -235,6 +235,12 @@ llm_config         (user_id, provider[local/cloud], model, encrypted_api_key, up
 
 ## 8. Engineering Standards & Project Structure
 
+### 8.0 Repository Strategy: Monorepo
+
+A single monorepo, not separate repos per app. This isn't just convention — it's load-bearing for the contract-enforcement design in Section 2.6: build-time contract checking only works because the backend and frontend are built from the **same commit in the same CI run**. Separate repos would force `packages/api-contract` to become a published, version-bumped package, reintroducing the exact "drift caught late" risk that design eliminates. It also keeps day-to-day work simpler for a project this size: one PR can change a backend DTO and its frontend call site atomically, one CI pipeline covers everything (with path-based filtering so unrelated packages skip rebuilding), and local dev is one orchestrated command instead of cross-repo package linking.
+
+Tooling: pnpm workspaces for dependency resolution, plus **Turborepo** on top for build caching and affected-package detection (Nx is a heavier alternative with more built-in generators, likely more than needed here).
+
 Monorepo, with a clean boundary between the Backend (NestJS), the Agent (Electron/Node, OS-specific), and shared logic — reinforced now by the fact that Backend and Agent are genuinely separate deployable processes, not just separate folders.
 
 ### 8.1 Project Structure
@@ -301,6 +307,7 @@ screen-time-analytics/
 - **Classification method:** backend-side LLM, user-configurable local (self-hosted only) or cloud provider/model — see 3.3.
 - **Local-provider visibility:** backend auto-detects Ollama reachability/models and exposes it via `GET /llm/providers`; frontend only shows the local option when detected — no manual toggle, no dead options — see 3.3.
 - **API contract enforcement:** contract is generated from backend DTOs (never hand-written), frontend types are code-generated from it, and CI/build regenerates + typechecks so a backend shape change without a matching frontend update fails the build — never surfaces in production — see 2.6, 8.3.
+- **Repository strategy:** monorepo (pnpm workspaces + Turborepo), chosen specifically because it's what makes build-time contract enforcement possible — see 8.0.
 - **API key storage:** encrypted at rest in Postgres (AES-256-GCM, backend-held master key), never on any client — see 3.3.
 - **Data retention:** indefinite by default; manual selective deletion via UI — see Section 6.
 - **Engineering standards:** monorepo, strict TypeScript, NestJS DI, schema-validated boundaries, CI-enforced testing — see Section 8.
