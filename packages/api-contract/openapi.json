@@ -1,0 +1,539 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/health": {
+      "get": {
+        "operationId": "AppController_health",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Service healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "enum": ["ok"]
+                    },
+                    "version": {
+                      "type": "string"
+                    },
+                    "uptimeSeconds": {
+                      "type": "number"
+                    },
+                    "database": {
+                      "type": "string",
+                      "enum": ["up"]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Liveness + database connectivity probe",
+        "tags": ["health"]
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "operationId": "AuthController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "409": {
+            "description": "Email already registered"
+          }
+        },
+        "summary": "Create an account and receive an access/refresh token pair",
+        "tags": ["auth"]
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid email or password"
+          }
+        },
+        "summary": "Exchange email + password for an access/refresh token pair",
+        "tags": ["auth"]
+      }
+    },
+    "/auth/refresh": {
+      "post": {
+        "operationId": "AuthController_refresh",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Refresh token invalid, expired, or already used"
+          }
+        },
+        "summary": "Rotate an unexpired refresh token for a new token pair",
+        "tags": ["auth"]
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "operationId": "AuthController_logout",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTokenDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token revoked"
+          },
+          "401": {
+            "description": "Refresh token invalid"
+          }
+        },
+        "summary": "Revoke a refresh token so it can no longer be used",
+        "tags": ["auth"]
+      }
+    },
+    "/auth/me": {
+      "post": {
+        "operationId": "AuthController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing or invalid access token"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Echo the authenticated user for token validation",
+        "tags": ["auth"]
+      }
+    },
+    "/devices/register": {
+      "post": {
+        "operationId": "DevicesController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDeviceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed or device name taken"
+          },
+          "401": {
+            "description": "Missing or invalid access token"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Register a new device and receive its opaque device token",
+        "tags": ["devices"]
+      }
+    },
+    "/devices": {
+      "get": {
+        "operationId": "DevicesController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeviceDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the authenticated user’s devices",
+        "tags": ["devices"]
+      }
+    },
+    "/devices/{id}": {
+      "patch": {
+        "operationId": "DevicesController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateDeviceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Device not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rename a device or change its platform",
+        "tags": ["devices"]
+      },
+      "delete": {
+        "operationId": "DevicesController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": ""
+          },
+          "404": {
+            "description": "Device not found"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Unregister a device",
+        "tags": ["devices"]
+      }
+    },
+    "/devices/heartbeat": {
+      "post": {
+        "operationId": "DevicesController_heartbeat",
+        "parameters": [
+          {
+            "name": "x-device-token",
+            "required": true,
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity recorded"
+          },
+          "404": {
+            "description": "Unknown device token"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Report device activity (authenticated with the opaque device token)",
+        "tags": ["devices"]
+      }
+    }
+  },
+  "info": {
+    "title": "Screen Time Analytics API",
+    "description": "Backend for the Screen Time Analytics desktop analytics platform.",
+    "version": "0.1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "user@example.com",
+            "description": "Account email address"
+          },
+          "password": {
+            "type": "string",
+            "example": "StrongPassw0rd!",
+            "minLength": 8,
+            "maxLength": 128
+          }
+        },
+        "required": ["email", "password"]
+      },
+      "AuthUserDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string",
+            "example": "user@example.com"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["id", "email", "createdAt"]
+      },
+      "RefreshTokenPairDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "Short-lived JWT used to authenticate API requests"
+          },
+          "refreshToken": {
+            "type": "string",
+            "description": "Rotating JWT used to mint new access tokens"
+          }
+        },
+        "required": ["accessToken", "refreshToken"]
+      },
+      "AuthResponseDto": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/AuthUserDto"
+          },
+          "tokens": {
+            "$ref": "#/components/schemas/RefreshTokenPairDto"
+          }
+        },
+        "required": ["user", "tokens"]
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "user@example.com"
+          },
+          "password": {
+            "type": "string"
+          }
+        },
+        "required": ["email", "password"]
+      },
+      "RefreshTokenDto": {
+        "type": "object",
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "description": "The refresh token to rotate (or revoke on logout)"
+          }
+        },
+        "required": ["refreshToken"]
+      },
+      "RegisterDeviceDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Gaming Rig",
+            "maxLength": 100
+          },
+          "platform": {
+            "type": "string",
+            "enum": ["linux-x11", "linux-wayland", "windows", "macos", "unknown"],
+            "example": "linux-x11"
+          }
+        },
+        "required": ["name", "platform"]
+      },
+      "DeviceDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string",
+            "example": "Gaming Rig",
+            "maxLength": 100
+          },
+          "platform": {
+            "type": "string",
+            "enum": ["linux-x11", "linux-wayland", "windows", "macos", "unknown"]
+          },
+          "deviceToken": {
+            "type": "string",
+            "description": "Opaque token the device presents for ingest API calls"
+          },
+          "lastSeenAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": ["id", "name", "platform", "createdAt", "updatedAt"]
+      },
+      "UpdateDeviceDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Living Room PC",
+            "maxLength": 100
+          },
+          "platform": {
+            "type": "string",
+            "enum": ["linux-x11", "linux-wayland", "windows", "macos", "unknown"]
+          }
+        }
+      }
+    }
+  }
+}

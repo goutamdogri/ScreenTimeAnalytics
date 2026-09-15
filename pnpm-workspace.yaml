@@ -1,0 +1,26 @@
+packages:
+  - 'apps/*'
+  - 'packages/*'
+
+allowBuilds:
+  '@parcel/watcher': true
+  '@prisma/engines': true
+  '@scarf/scarf': true
+  argon2: true
+  prisma: true
+  unrs-resolver: true
+
+minimumReleaseAgeExclude:
+  - '@nestjs/common@11.2.5'
+  - '@nestjs/core@11.2.5'
+  - '@nestjs/platform-express@11.2.5'
+  - '@nestjs/testing@11.2.5'
+  - '@turbo/darwin-64@2.10.13'
+  - '@turbo/darwin-arm64@2.10.13'
+  - '@turbo/linux-64@2.10.13'
+  - '@turbo/linux-arm64@2.10.13'
+  - '@turbo/linux-static-x64@2.10.13'
+  - '@turbo/linux-static-arm64@2.10.13'
+  - '@turbo/windows-64@2.10.13'
+  - '@turbo/windows-arm64@2.10.13'
+  - 'turbo@2.10.13'

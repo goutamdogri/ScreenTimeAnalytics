@@ -1,0 +1,14 @@
+{
+  "moduleFileExtensions": ["js", "json", "ts"],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "transform": {
+    "^.+\\.ts$": ["ts-jest", { "tsconfig": "./tsconfig.json" }]
+  },
+  "moduleNameMapper": {
+    "^@screen-time/db$": "<rootDir>/../../../packages/db/src/index.ts",
+    "^@screen-time/core$": "<rootDir>/../../../packages/core/src/index.ts"
+  },
+  "globalSetup": "<rootDir>/e2e-setup.js"
+}

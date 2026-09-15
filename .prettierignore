@@ -1,0 +1,11 @@
+node_modules
+dist
+coverage
+**/generated/prisma
+**/src/generated
+pnpm-lock.yaml
+*.snap
+.env*
+!**/.env.example
+Dockerfile
+docker-compose.yml

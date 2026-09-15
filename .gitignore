@@ -1,0 +1,39 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Test output
+coverage/
+*.snap
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+*.log
+pnpm-debug.log*
+npm-debug.log*
+
+# Prisma generated client (regenerated via `pnpm db:generate`)
+packages/db/src/generated/
+
+# API contract generated types (regenerated via `pnpm generate:openapi` + package build)
+packages/api-contract/src/generated/
+packages/api-contract/openapi.json.tmp
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+
+# Turbo
+.turbo/
