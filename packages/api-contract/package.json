@@ -1,0 +1,18 @@
+{
+  "name": "@screen-time/api-contract",
+  "version": "0.1.0",
+  "private": true,
+  "description": "TypeScript types generated from the backend's OpenAPI spec — never hand-edited (see docs/screen-time-analytics-project.md §2.6)",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "generate": "openapi-typescript ./openapi.json --output ./src/generated/types.ts",
+    "build": "pnpm generate && tsc -p tsconfig.build.json",
+    "typecheck": "pnpm generate && tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@screen-time/backend": "workspace:*",
+    "openapi-typescript": "^7.13.0",
+    "typescript": "~5.9.3"
+  }
+}
