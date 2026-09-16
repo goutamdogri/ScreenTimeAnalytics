@@ -82,7 +82,7 @@ export function CalendarHeatmap({
         const intensity = layout.max > 0 ? d.totalMinutes / layout.max : 0;
         const fill =
           d.totalMinutes > 0
-            ? `color-mix(in srgb, var(--accent) ${Math.round(20 + 80 * intensity)}%, var(--surface-2))`
+            ? `color-mix(in srgb, var(--accent) ${Math.round(18 + 82 * intensity)}%, var(--surface-2))`
             : 'var(--surface-2)';
 
         return (

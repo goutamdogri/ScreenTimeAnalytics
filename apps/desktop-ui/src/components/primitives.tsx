@@ -1,16 +1,30 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  type ReactNode,
-  type RefObject,
-  type CSSProperties,
-} from 'react';
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { categoryColor } from '../lib/category-colors';
+import { formatPercent } from '../lib/format';
 
 export interface WidthHandle {
   ref: RefObject<HTMLDivElement | null>;
   width: number;
+}
+
+/** Brand glyph — the "signal" mark used in the sidebar and auth screens. */
+export function SignalGlyph() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.4}
+      strokeLinecap="round"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="1.6" fill="currentColor" stroke="none" />
+      <path d="M6 6a8.5 8.5 0 0 0 0 12" />
+      <path d="M18 6a8.5 8.5 0 0 1 0 12" />
+      <path d="M8.6 8.6a5 5 0 0 0 0 6.8" />
+      <path d="M15.4 8.6a5 5 0 0 1 0 6.8" />
+    </svg>
+  );
 }
 
 /**
@@ -64,36 +78,18 @@ export function MetricStat({
   value,
   label,
   sub,
-  variant = 'accent',
-  size = 'lg',
+  tone,
 }: {
   value: string;
   label: string;
   sub?: string;
-  variant?: 'accent' | 'autopilot' | 'plain';
-  size?: 'lg' | 'md';
+  tone?: 'accent' | 'autopilot';
 }) {
-  const style: CSSProperties | undefined =
-    variant === 'accent'
-      ? { color: 'var(--accent)' }
-      : variant === 'autopilot'
-        ? { color: 'var(--autopilot)' }
-        : undefined;
   return (
-    <div>
-      <div
-        className={`stat-value ${size === 'md' ? 'small' : ''} num`}
-        style={style}
-        data-testid="stat-value"
-      >
-        {value}
-      </div>
+    <div className="stat-card panel" data-testid="stat-value">
       <div className="stat-label">{label}</div>
-      {sub ? (
-        <div className="stat-delta" style={{ color: 'var(--ink-4)' }}>
-          {sub}
-        </div>
-      ) : null}
+      <div className={`stat-value num${tone ? ` tone-${tone}` : ''}`}>{value}</div>
+      {sub ? <div className="stat-sub">{sub}</div> : null}
     </div>
   );
 }
@@ -110,22 +106,27 @@ export function SplitGauge({
   total: number;
 }) {
   const pct = (v: number) => (total > 0 ? (v / total) * 100 : 0);
+  const rows = [
+    { label: 'Focus', minutes: focus, color: 'var(--accent)' },
+    { label: 'Autopilot', minutes: autopilot, color: 'var(--autopilot)' },
+    { label: 'Neutral', minutes: neutral, color: 'var(--ink-4)' },
+  ];
   return (
     <div data-testid="split-gauge">
-      <div
-        className="split-track"
-        style={{
-          height: 12,
-          display: 'flex',
-          overflow: 'hidden',
-          borderRadius: 999,
-          background: 'var(--surface-2)',
-          border: '1px solid var(--line)',
-        }}
-      >
+      <div className="gauge-track">
         <div style={{ width: `${pct(focus)}%`, background: 'var(--accent)' }} />
         <div style={{ width: `${pct(autopilot)}%`, background: 'var(--autopilot)' }} />
         <div style={{ width: `${pct(neutral)}%`, background: 'var(--ink-4)' }} />
+      </div>
+      <div className="gauge-rows">
+        {rows.map((row) => (
+          <div key={row.label} className="gauge-row">
+            <span className="dot" style={{ background: row.color }} />
+            <span>{row.label}</span>
+            <span className="gauge-pct">{formatPercent(pct(row.minutes) / 100)}</span>
+            <span className="gauge-mins">{row.minutes}m</span>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -138,6 +139,7 @@ export function LegendDot({ category }: { category: string }) {
       style={{
         borderColor: 'transparent',
         background: 'color-mix(in srgb, var(--surface-2) 70%, transparent)',
+        cursor: 'default',
       }}
       data-testid="legend-dot"
     >

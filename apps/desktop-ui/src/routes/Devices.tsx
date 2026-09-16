@@ -5,6 +5,16 @@ import { Skeleton, EmptyState } from '../components/primitives';
 
 type DeviceDto = components['schemas']['DeviceDto'];
 
+function shortDate(iso: string | undefined): string {
+  if (!iso) return 'never';
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  }).format(new Date(iso));
+}
+
 export function Devices() {
   const [devices, setDevices] = useState<DeviceDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -18,37 +28,32 @@ export function Devices() {
   }, []);
 
   if (loading) return <Skeleton height={200} />;
-  if (devices.length === 0)
-    return <EmptyState title="No devices" note="Install the agent to register a device." />;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-      {devices.map((d) => (
-        <div
-          key={d.id}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 16,
-            padding: '12px 16px',
-            borderRadius: 8,
-            background: 'var(--surface)',
-            border: '1px solid var(--line)',
-          }}
-        >
-          <div style={{ fontSize: 14, color: 'var(--ink)' }}>{d.name}</div>
-          <div style={{ fontSize: 12, color: 'var(--ink-4)' }}>{d.platform}</div>
-          <div style={{ flex: 1 }} />
-          {d.lastSeenAt ? (
-            <div style={{ fontSize: 11, color: 'var(--ink-4)', fontFamily: 'var(--font-num)' }}>
-              Last seen {new Date(d.lastSeenAt).toLocaleDateString()}
-            </div>
-          ) : null}
-          <div style={{ fontSize: 11, color: 'var(--ink-4)', fontFamily: 'var(--font-num)' }}>
-            Added {new Date(d.createdAt).toLocaleDateString()}
-          </div>
+    <div className="panel">
+      <div className="panel-head">
+        <div className="panel-head-stack">
+          <div className="panel-title">Registered devices</div>
+          <div className="panel-sub">active trackers on this account</div>
         </div>
-      ))}
+      </div>
+      {devices.length === 0 ? (
+        <EmptyState title="No devices" note="Install the agent to register a device." />
+      ) : (
+        <div className="list">
+          {devices.map((d) => (
+            <div key={d.id} className="list-row">
+              <span className="icon-dot" style={{ background: 'var(--accent)' }} />
+              <div className="row-main">
+                <div className="row-title">{d.name}</div>
+                <div className="row-sub">{d.platform}</div>
+              </div>
+              <div className="row-meta">last seen {shortDate(d.lastSeenAt)}</div>
+              <div className="row-meta">added {shortDate(d.createdAt)}</div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

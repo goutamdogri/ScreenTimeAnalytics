@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { components } from '@screen-time/api-contract';
 import { client } from '../api/client';
-import { formatMinutes, localTimezone } from '../lib/format';
+import { formatMinutes, formatPercent, localTimezone } from '../lib/format';
 import {
   MetricStat,
   SplitGauge,
@@ -49,46 +49,65 @@ export function Overview() {
   if (!summary) return <EmptyState title="No data yet" note="Start the tracker and come back." />;
 
   const trendData = trendDays.map((d) => ({ date: d.date, totalMinutes: d.totalMinutes }));
+  const shareOf = (v: number) =>
+    formatPercent(summary.totalMinutes > 0 ? v / summary.totalMinutes : 0);
+  const deviceWord = summary.activeDevices === 1 ? 'device' : 'devices';
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
-        <MetricStat value={formatMinutes(summary.totalMinutes)} label="Today" />
-        <MetricStat value={`${summary.sessionCount}`} label="Sessions" sub="last 7d" />
-        <MetricStat value={summary.activeDevices.toString()} label="Active devices" />
+    <>
+      <div className="grid grid-stats">
+        <MetricStat
+          value={formatMinutes(summary.totalMinutes)}
+          label="Screen time today"
+          sub={`${summary.sessionCount} sessions across ${summary.activeDevices} ${deviceWord}`}
+          tone="accent"
+        />
+        <MetricStat
+          value={formatMinutes(summary.focusMinutes)}
+          label="Focus"
+          sub={`${shareOf(summary.focusMinutes)} of today`}
+        />
+        <MetricStat
+          value={formatMinutes(summary.autopilotMinutes)}
+          label="Autopilot"
+          sub={`${shareOf(summary.autopilotMinutes)} of today`}
+          tone="autopilot"
+        />
       </div>
 
-      <SplitGauge
-        focus={summary.focusMinutes}
-        autopilot={summary.autopilotMinutes}
-        neutral={summary.neutralMinutes}
-        total={summary.totalMinutes}
-      />
-      <div style={{ display: 'flex', gap: 12, fontSize: 12, color: 'var(--ink-4)' }}>
-        <span className="chip">
-          <span className="chip-dot" style={{ background: 'var(--accent)' }} />
-          focus
-        </span>
-        <span className="chip">
-          <span className="chip-dot" style={{ background: 'var(--autopilot)' }} />
-          autopilot
-        </span>
-        <span className="chip">
-          <span className="chip-dot" style={{ background: 'var(--ink-4)' }} />
-          neutral
-        </span>
-      </div>
-
-      <div>
-        <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--ink)', marginBottom: 8 }}>
-          Last 7 days
+      <div className="grid grid-2">
+        <div className="panel">
+          <div className="panel-head">
+            <div className="panel-head-stack">
+              <div className="panel-title">Today's mix</div>
+              <div className="panel-sub">how your time splits up</div>
+            </div>
+          </div>
+          <SplitGauge
+            focus={summary.focusMinutes}
+            autopilot={summary.autopilotMinutes}
+            neutral={summary.neutralMinutes}
+            total={summary.totalMinutes}
+          />
         </div>
-        <ChartFrame>{(w) => <TrendArea width={w} height={180} data={trendData} />}</ChartFrame>
+
+        <div className="panel">
+          <div className="panel-head">
+            <div className="panel-head-stack">
+              <div className="panel-title">Last 7 days</div>
+              <div className="panel-sub">daily screen time</div>
+            </div>
+          </div>
+          <ChartFrame>{(w) => <TrendArea width={w} height={170} data={trendData} />}</ChartFrame>
+        </div>
       </div>
 
-      <div>
-        <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--ink)', marginBottom: 8 }}>
-          Recent sessions
+      <div className="panel">
+        <div className="panel-head">
+          <div className="panel-head-stack">
+            <div className="panel-title">Recent sessions</div>
+            <div className="panel-sub">the week at a glance</div>
+          </div>
         </div>
         {sessions.length === 0 ? (
           <EmptyState title="No sessions yet" note="They'll appear as you work." />
@@ -98,6 +117,6 @@ export function Overview() {
       </div>
 
       <Phase5Tile title="Achievements" note="XP, streaks, and boss encounters — coming soon." />
-    </div>
+    </>
   );
 }

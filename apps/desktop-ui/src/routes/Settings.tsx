@@ -1,34 +1,39 @@
 import { useAuth } from '../auth/AuthProvider';
 import { Phase5Tile } from '../components/primitives';
+import { LogoutIcon } from '../shell/icons';
 
 export function Settings() {
   const { user, logout } = useAuth();
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <div
-        style={{
-          padding: '16px 20px',
-          borderRadius: 8,
-          background: 'var(--surface)',
-          border: '1px solid var(--line)',
-        }}
-      >
-        <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--ink)', marginBottom: 4 }}>
-          Account
+    <>
+      <div className="panel">
+        <div className="panel-head">
+          <div className="panel-head-stack">
+            <div className="panel-title">Account</div>
+            <div className="panel-sub">your profile and session</div>
+          </div>
         </div>
-        <div style={{ fontSize: 13, color: 'var(--ink-4)', marginBottom: 12 }}>
-          {user?.email ?? '—'}
+        <div className="list">
+          <div className="list-row">
+            <div className="row-main">
+              <div className="row-title">{user?.email ?? '—'}</div>
+              <div className="row-sub">Email address</div>
+            </div>
+          </div>
         </div>
-        <button className="btn" data-variant="ghost" onClick={logout}>
-          Sign out
-        </button>
+        <div style={{ marginTop: 16 }}>
+          <button className="btn btn-ghost btn-danger" onClick={logout}>
+            <LogoutIcon />
+            Sign out
+          </button>
+        </div>
       </div>
 
       <Phase5Tile
         title="Budgets & alerts"
         note="Daily/weekly limits and silence windows — coming soon."
       />
-    </div>
+    </>
   );
 }

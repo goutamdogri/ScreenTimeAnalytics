@@ -142,6 +142,20 @@ export function TrendArea({
         strokeLinecap="round"
       />
 
+      {data.length <= 12
+        ? layout.pts.map((p, i) => (
+            <circle
+              key={`${data[i]?.date ?? i}`}
+              cx={p.x}
+              cy={p.y}
+              r={3}
+              fill={color}
+              stroke="var(--bg)"
+              strokeWidth={1.5}
+            />
+          ))
+        : null}
+
       {hover !== null && data[hover] ? (
         <g>
           <line
@@ -151,7 +165,6 @@ export function TrendArea({
             y2={pad.t + layout.innerH}
             stroke="var(--line-strong)"
             strokeWidth={1}
-            strokeDasharray="3 3"
           />
           <circle
             cx={layout.pts[hover]!.x}
@@ -165,15 +178,15 @@ export function TrendArea({
             transform={`translate(${layout.pts[hover]!.x}, ${Math.max(pad.t, layout.pts[hover]!.y - 26)})`}
           >
             <rect
-              x={-34}
-              y={-18}
-              width={68}
+              x={-38}
+              y={-19}
+              width={76}
               height={20}
-              rx={4}
-              fill="var(--surface)"
-              stroke="var(--line)"
+              rx={6}
+              fill="var(--surface-3)"
+              stroke="none"
             />
-            <text x={0} y={-3} textAnchor="middle" fill="var(--ink)" style={FONT_STYLE}>
+            <text x={0} y={-4} textAnchor="middle" fill="var(--ink)" style={FONT_STYLE}>
               {data[hover]!.totalMinutes}m
             </text>
           </g>

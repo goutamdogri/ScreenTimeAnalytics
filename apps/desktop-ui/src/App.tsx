@@ -1,4 +1,5 @@
 import { AuthProvider, useAuth } from './auth/AuthProvider';
+import { SignalGlyph } from './components/primitives';
 import { Shell, type ViewKey } from './shell/Shell';
 import { Overview } from './routes/Overview';
 import { Trends } from './routes/Trends';
@@ -33,40 +34,54 @@ function Login() {
   };
 
   return (
-    <div className="auth-container" data-testid="login">
-      <div className="auth-card">
-        <div className="auth-eyebrow">{isRegister ? 'Create account' : 'Sign in'}</div>
-        <div className="auth-title">Screen Time Analytics</div>
-        <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <input
-            className="input"
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <input
-            className="input"
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-          {error ? <div style={{ fontSize: 12, color: 'var(--autopilot)' }}>{error}</div> : null}
-          <button className="btn" type="submit">
-            {isRegister ? 'Register' : 'Sign in'}
+    <div className="auth-shell" data-testid="login">
+      <div className="auth-panel">
+        <div className="auth-brand">
+          <div className="brand-mark">
+            <SignalGlyph />
+          </div>
+          <div className="auth-brand-text">
+            <div className="brand-name">Screen Time</div>
+          </div>
+        </div>
+        <div className="auth-card">
+          <div>
+            <div className="auth-title">{isRegister ? 'Create account' : 'Welcome back'}</div>
+            <div className="auth-sub">
+              {isRegister
+                ? 'Start measuring your screen time across every app.'
+                : 'Sign in to see how your day is splitting up.'}
+            </div>
+          </div>
+          <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <input
+              className="input"
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+            <input
+              className="input"
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            {error ? <div className="error-banner">{error}</div> : null}
+            <button className="btn btn-primary" type="submit" style={{ marginTop: 4 }}>
+              {isRegister ? 'Create account' : 'Sign in'}
+            </button>
+          </form>
+        </div>
+        <div className="auth-switch">
+          {isRegister ? 'Already have an account?' : 'New here?'}
+          <button onClick={() => setIsRegister(!isRegister)}>
+            {isRegister ? 'Sign in' : 'Create an account'}
           </button>
-        </form>
-        <button
-          className="btn"
-          data-variant="ghost"
-          style={{ marginTop: 8, width: '100%' }}
-          onClick={() => setIsRegister(!isRegister)}
-        >
-          {isRegister ? 'Already have an account? Sign in' : 'No account? Register'}
-        </button>
+        </div>
       </div>
     </div>
   );

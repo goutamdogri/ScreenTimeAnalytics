@@ -8,6 +8,12 @@ import type { StackedBarDatum } from '../components/TrendCharts';
 
 type TrendResponse = components['schemas']['DashboardTrendsResponse'];
 
+const RANGES = [
+  { key: 'week', label: 'Week' },
+  { key: 'month', label: 'Month' },
+  { key: 'quarter', label: 'Quarter' },
+] as const;
+
 export function Trends() {
   const [range, setRange] = useState<'week' | 'month' | 'quarter'>('week');
   const [trends, setTrends] = useState<TrendResponse | null>(null);
@@ -37,34 +43,50 @@ export function Trends() {
     byCategory: (d.byCategory ?? []).map((c) => ({ category: c.category, minutes: c.minutes })),
   }));
 
+  const rangeTitle: Record<string, string> = {
+    week: 'last 7 days',
+    month: 'last 30 days',
+    quarter: 'last 90 days',
+  };
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <div style={{ display: 'flex', gap: 8 }}>
-        {(['week', 'month', 'quarter'] as const).map((r) => (
-          <button
-            key={r}
-            className="btn"
-            data-variant={r === range ? 'primary' : 'ghost'}
-            onClick={() => setRange(r)}
-          >
-            {r}
-          </button>
-        ))}
+    <>
+      <div className="panel">
+        <div className="panel-head">
+          <div className="panel-head-stack">
+            <div className="panel-title">Total screen time</div>
+            <div className="panel-sub">{rangeTitle[range]}</div>
+          </div>
+          <div className="panel-head-right">
+            <div className="seg" role="tablist" aria-label="Time range">
+              {RANGES.map((r) => (
+                <button
+                  key={r.key}
+                  role="tab"
+                  aria-selected={r.key === range}
+                  className={r.key === range ? 'active' : ''}
+                  onClick={() => setRange(r.key)}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+        <ChartFrame>{(w) => <TrendArea width={w} height={210} data={trendData} />}</ChartFrame>
       </div>
 
-      <div>
-        <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--ink)', marginBottom: 8 }}>
-          Total screen time
+      <div className="panel">
+        <div className="panel-head">
+          <div className="panel-head-stack">
+            <div className="panel-title">By category</div>
+            <div className="panel-sub">stacked daily breakdown</div>
+          </div>
         </div>
-        <ChartFrame>{(w) => <TrendArea width={w} height={220} data={trendData} />}</ChartFrame>
+        <ChartFrame fallbackHeight={210}>
+          {(w) => <StackedBars width={w} height={210} data={barData} />}
+        </ChartFrame>
       </div>
-
-      <div>
-        <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--ink)', marginBottom: 8 }}>
-          By category
-        </div>
-        <ChartFrame>{(w) => <StackedBars width={w} height={220} data={barData} />}</ChartFrame>
-      </div>
-    </div>
+    </>
   );
 }

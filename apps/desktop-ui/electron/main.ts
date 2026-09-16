@@ -20,7 +20,7 @@ function createWindow(): BrowserWindow {
     minWidth: 1040,
     minHeight: 680,
     title: 'Screen Time',
-    backgroundColor: '#0c0c0b',
+    backgroundColor: '#0a0a0b',
     webPreferences: {
       preload: join(__dirname, 'preload.js'),
       contextIsolation: true,

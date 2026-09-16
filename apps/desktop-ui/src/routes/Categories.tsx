@@ -49,17 +49,24 @@ export function Categories() {
   }));
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 20 }}>
-        <div>
-          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--ink)', marginBottom: 12 }}>
-            Breakdown
+    <>
+      <div className="grid grid-2-eq">
+        <div className="panel">
+          <div className="panel-head">
+            <div className="panel-head-stack">
+              <div className="panel-title">Breakdown</div>
+              <div className="panel-sub">last 30 days by category</div>
+            </div>
           </div>
           <BudgetRings data={ringData} total={totalMinutes} />
         </div>
-        <div>
-          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--ink)', marginBottom: 12 }}>
-            Heatmap (14 weeks)
+
+        <div className="panel">
+          <div className="panel-head">
+            <div className="panel-head-stack">
+              <div className="panel-title">Activity</div>
+              <div className="panel-sub">14-week heatmap</div>
+            </div>
           </div>
           <ChartFrame fallbackHeight={140}>
             {(w) => <CalendarHeatmap width={w} data={[]} />}
@@ -68,15 +75,18 @@ export function Categories() {
       </div>
 
       {barData.length > 0 && (
-        <div>
-          <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--ink)', marginBottom: 8 }}>
-            Daily categories
+        <div className="panel">
+          <div className="panel-head">
+            <div className="panel-head-stack">
+              <div className="panel-title">Daily categories</div>
+              <div className="panel-sub">stacked by day</div>
+            </div>
           </div>
-          <ChartFrame>{(w) => <StackedBars width={w} height={220} data={barData} />}</ChartFrame>
+          <ChartFrame>{(w) => <StackedBars width={w} height={210} data={barData} />}</ChartFrame>
         </div>
       )}
 
       <Phase5Tile title="Radial chart" note="Interactive sunburst — coming in Phase 5." />
-    </div>
+    </>
   );
 }

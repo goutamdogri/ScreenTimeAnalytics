@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import type { components } from '@screen-time/api-contract';
 import { client } from '../api/client';
 import { localTimezone } from '../lib/format';
+import { categoryLabel } from '../lib/category-colors';
 import { Skeleton, EmptyState } from '../components/primitives';
 import { SessionTimeline } from '../components/SessionTimeline';
 
@@ -25,37 +26,42 @@ export function Sessions() {
   }, []);
 
   if (loading) return <Skeleton height={320} />;
-  if (sessions.length === 0)
-    return <EmptyState title="No sessions yet" note="They'll appear as you work." />;
 
-  const filtered = filter ? sessions.filter((s) => s.category === filter) : sessions;
   const categories = [...new Set(sessions.map((s) => s.category))].sort();
+  const filtered = filter ? sessions.filter((s) => s.category === filter) : sessions;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-        <button
-          className="chip"
-          onClick={() => setFilter(null)}
-          style={{ borderColor: !filter ? 'var(--accent)' : undefined }}
-        >
-          all ({sessions.length})
-        </button>
-        {categories.map((cat) => {
-          const count = sessions.filter((s) => s.category === cat).length;
-          return (
-            <button
-              key={cat}
-              className="chip"
-              onClick={() => setFilter(cat)}
-              style={{ borderColor: filter === cat ? 'var(--accent)' : undefined }}
-            >
-              {cat} ({count})
-            </button>
-          );
-        })}
+    <div className="panel">
+      <div className="panel-head">
+        <div className="panel-head-stack">
+          <div className="panel-title">All sessions</div>
+          <div className="panel-sub">
+            {filtered.length} of {sessions.length} in the last 30 days
+          </div>
+        </div>
+        <div className="panel-head-right">
+          <button className={`chip${!filter ? ' active' : ''}`} onClick={() => setFilter(null)}>
+            all ({sessions.length})
+          </button>
+          {categories.map((cat) => {
+            const count = sessions.filter((s) => s.category === cat).length;
+            return (
+              <button
+                key={cat}
+                className={`chip${filter === cat ? ' active' : ''}`}
+                onClick={() => setFilter(cat)}
+              >
+                {categoryLabel(cat)} ({count})
+              </button>
+            );
+          })}
+        </div>
       </div>
-      <SessionTimeline sessions={filtered} />
+      {filtered.length === 0 ? (
+        <EmptyState title="No sessions yet" note="They'll appear as you work." />
+      ) : (
+        <SessionTimeline sessions={filtered} />
+      )}
     </div>
   );
 }

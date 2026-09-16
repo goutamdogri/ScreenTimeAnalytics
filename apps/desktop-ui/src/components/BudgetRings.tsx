@@ -1,4 +1,5 @@
 import { categoryColor, categoryLabel } from '../lib/category-colors';
+import { formatPercent } from '../lib/format';
 
 export interface BudgetItem {
   category: string;
@@ -15,15 +16,16 @@ export function BudgetRings({
   size?: number;
   total: number;
 }) {
-  const r = 70;
+  const r = 64;
   const circumference = 2 * Math.PI * r;
-  const strokeWidth = 16;
+  const strokeWidth = 13;
+  const gap = 6;
   let offset = 0;
 
   const sorted = [...data].sort((a, b) => b.minutes - a.minutes);
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
+    <div className="gauge-wrap" style={{ display: 'flex', alignItems: 'center', gap: 28 }}>
       <svg
         width={size}
         height={size}
@@ -38,10 +40,9 @@ export function BudgetRings({
           fill="none"
           stroke="var(--surface-2)"
           strokeWidth={strokeWidth}
-          opacity={0.3}
         />
         {sorted.map((item) => {
-          const share = circumference * item.share;
+          const arc = Math.max(0, circumference * item.share - gap);
           const stroke = categoryColor(item.category);
           const path = (
             <circle
@@ -52,62 +53,51 @@ export function BudgetRings({
               fill="none"
               stroke={stroke}
               strokeWidth={strokeWidth}
-              strokeDasharray={`${share.toFixed(1)} ${circumference}`}
-              strokeDashoffset={(-offset).toFixed(1)}
-              strokeLinecap="butt"
+              strokeDasharray={`${arc.toFixed(1)} ${circumference.toFixed(1)}`}
+              strokeDashoffset={(-(offset + gap / 2)).toFixed(1)}
+              strokeLinecap="round"
               transform={`rotate(-90 ${size / 2} ${size / 2})`}
             >
               <title>{`${categoryLabel(item.category)}: ${item.minutes}m (${Math.round(item.share * 100)}%)`}</title>
             </circle>
           );
-          offset += share;
+          offset += circumference * item.share;
           return path;
         })}
         <text
           x={size / 2}
-          y={size / 2 - 6}
+          y={size / 2 - 2}
           textAnchor="middle"
           fill="var(--ink)"
-          style={{ fontSize: 24, fontWeight: 500, fontFamily: 'var(--font-num)' }}
+          style={{
+            fontSize: 20,
+            fontWeight: 550,
+            fontFamily: 'var(--font-num)',
+            fontVariantNumeric: 'tabular-nums',
+          }}
           data-testid="ring-total"
         >
           {total}m
         </text>
         <text
           x={size / 2}
-          y={size / 2 + 12}
+          y={size / 2 + 14}
           textAnchor="middle"
           fill="var(--ink-4)"
-          style={{ fontSize: 10, fontFamily: 'var(--font-body)' }}
+          style={{ fontSize: 10, letterSpacing: '0.08em', textTransform: 'uppercase' }}
         >
           total
         </text>
       </svg>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      <div className="gauge-rows" style={{ marginTop: 0, flex: 1, minWidth: 0 }}>
         {sorted.map((item) => (
-          <div
-            key={item.category}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 8,
-              fontSize: 12,
-              color: 'var(--ink)',
-            }}
-          >
-            <span
-              style={{
-                width: 8,
-                height: 8,
-                borderRadius: 2,
-                background: categoryColor(item.category),
-                display: 'inline-block',
-              }}
-            />
-            <span>{categoryLabel(item.category)}</span>
-            <span className="num" style={{ color: 'var(--ink-4)' }}>
-              {item.minutes}m
+          <div key={item.category} className="gauge-row">
+            <span className="dot" style={{ background: categoryColor(item.category) }} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {categoryLabel(item.category)}
             </span>
+            <span className="gauge-pct">{formatPercent(item.share)}</span>
+            <span className="gauge-mins">{item.minutes}m</span>
           </div>
         ))}
       </div>

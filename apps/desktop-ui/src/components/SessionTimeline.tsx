@@ -1,8 +1,13 @@
 import { formatClock } from '../lib/format';
-import { categoryColor } from '../lib/category-colors';
+import { categoryColor, categoryLabel } from '../lib/category-colors';
 import type { components } from '@screen-time/api-contract';
 
 type SessionDto = components['schemas']['SessionDto'];
+
+function sessionTitle(s: SessionDto): string {
+  const text = typeof s.windowTitle === 'string' ? s.windowTitle : '';
+  return text || String(s.app ?? '');
+}
 
 export function SessionTimeline({ sessions }: { sessions: SessionDto[] }) {
   if (sessions.length === 0) return null;
@@ -10,78 +15,23 @@ export function SessionTimeline({ sessions }: { sessions: SessionDto[] }) {
   const maxDuration = Math.max(...sessions.map((s) => s.durationMin));
 
   return (
-    <div
-      style={{ display: 'flex', flexDirection: 'column', gap: 8 }}
-      data-testid="session-timeline"
-    >
+    <div className="sess-list" data-testid="session-timeline">
       {sessions.map((s, i) => {
-        const pct = (s.durationMin / maxDuration) * 100;
+        const pct = maxDuration > 0 ? (s.durationMin / maxDuration) * 100 : 0;
         return (
-          <div
-            key={i}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: 12,
-              padding: '8px 12px',
-              borderRadius: 6,
-              background: 'var(--surface)',
-              border: '1px solid var(--line)',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                minWidth: 64,
-                fontSize: 12,
-                color: 'var(--ink-4)',
-                fontFamily: 'var(--font-num)',
-              }}
-            >
-              <span
-                style={{
-                  width: 6,
-                  height: 6,
-                  borderRadius: 2,
-                  background: categoryColor(s.category),
-                  display: 'inline-block',
-                  flexShrink: 0,
-                }}
-              />
-              <span>{formatClock(s.startedAt)}</span>
-            </div>
-            <div style={{ flex: 1 }}>
-              <div
-                style={{
-                  height: 4,
-                  borderRadius: 2,
-                  background: 'var(--surface-2)',
-                  overflow: 'hidden',
-                }}
-              >
-                <div
-                  style={{
-                    height: '100%',
-                    width: `${pct}%`,
-                    borderRadius: 2,
-                    background: categoryColor(s.category),
-                  }}
-                />
+          <div key={i} className="sess-row">
+            <div className="sess-time">{formatClock(s.startedAt)}</div>
+            <div className="sess-dot" style={{ background: categoryColor(s.category) }} />
+            <div className="sess-main">
+              <div className="row-title" title={sessionTitle(s)}>
+                {sessionTitle(s)}
               </div>
+              <div className="row-sub">{categoryLabel(s.category)}</div>
             </div>
-            <div
-              style={{
-                minWidth: 36,
-                textAlign: 'right',
-                fontSize: 12,
-                color: 'var(--ink)',
-                fontFamily: 'var(--font-num)',
-              }}
-            >
-              {s.durationMin}m
+            <div className="sess-bar">
+              <div style={{ width: `${pct}%`, background: categoryColor(s.category) }} />
             </div>
+            <div className="sess-dur">{s.durationMin}m</div>
           </div>
         );
       })}
