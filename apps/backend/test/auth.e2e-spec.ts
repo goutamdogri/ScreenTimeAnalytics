@@ -1,4 +1,3 @@
-import { afterAll, beforeAll, describe, expect, it, jest } from '@jest/globals';
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { bootstrap } from '../src/main';

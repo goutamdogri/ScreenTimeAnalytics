@@ -1,4 +1,3 @@
-import { describe, expect, it, jest } from '@jest/globals';
 import { ConfigService } from '@nestjs/config';
 import { Category } from '@screen-time/core';
 import { ClassificationCache } from '@screen-time/db';
@@ -49,7 +48,7 @@ describe('ClassificationWorkerService', () => {
 
     const classification = {
       findPending,
-      findCached: jest.fn<() => Promise<ClassificationCache | null>>().mockResolvedValue(
+      findCached: jest.fn<Promise<ClassificationCache | null>, []>().mockResolvedValue(
         options.cached
           ? {
               id: 'cache-1',
@@ -62,10 +61,10 @@ describe('ClassificationWorkerService', () => {
           : null,
       ),
       writeCache: jest
-        .fn<(url: string, result: StoredClassification, method: string) => Promise<void>>()
+        .fn<Promise<void>, [url: string, result: StoredClassification, method: string]>()
         .mockResolvedValue(undefined),
       apply: jest
-        .fn<(eventId: string, result: StoredClassification) => Promise<void>>()
+        .fn<Promise<void>, [eventId: string, result: StoredClassification]>()
         .mockResolvedValue(undefined),
       metadataString: jest
         .fn()
@@ -80,7 +79,7 @@ describe('ClassificationWorkerService', () => {
     const provider =
       options.provider === undefined
         ? ({
-            classify: jest.fn<() => Promise<LLMClassification>>().mockResolvedValue({
+            classify: jest.fn<Promise<LLMClassification>, []>().mockResolvedValue({
               category: Category.LONG_FORM_VIDEO,
               confidence: 0.9,
             }),
@@ -88,7 +87,7 @@ describe('ClassificationWorkerService', () => {
         : options.provider;
     const llmProviders = {
       buildProviderForUser: jest
-        .fn<(userId: string) => Promise<LLMProvider | null>>()
+        .fn<Promise<LLMProvider | null>, [userId: string]>()
         .mockResolvedValue(provider),
     } as unknown as LlmProvidersService;
 
@@ -218,7 +217,7 @@ describe('ClassificationWorkerService', () => {
     it('one failing event does not abort the batch', async () => {
       const provider = {
         classify: jest
-          .fn<() => Promise<LLMClassification>>()
+          .fn<Promise<LLMClassification>, []>()
           .mockRejectedValue(new Error('network down')),
       } as unknown as LLMProvider;
       const { worker, classification } = build({ provider });

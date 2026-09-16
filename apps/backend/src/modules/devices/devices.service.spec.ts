@@ -1,4 +1,3 @@
-import { describe, expect, it, jest } from '@jest/globals';
 import { NotFoundException } from '@nestjs/common';
 import { DevicesService } from './devices.service';
 
@@ -118,7 +117,7 @@ describe('DevicesService', () => {
   describe('heartbeat', () => {
     it('records lastSeenAt for a resolved deviceId', async () => {
       const updateMock = jest
-        .fn<(...args: unknown[]) => Promise<{ id: string; lastSeenAt: Date }>>()
+        .fn<Promise<{ id: string; lastSeenAt: Date }>, unknown[]>()
         .mockResolvedValue({ id: '1', lastSeenAt: new Date() });
       const prismaMock = {
         device: { update: updateMock },

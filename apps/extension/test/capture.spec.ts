@@ -1,4 +1,3 @@
-import { describe, expect, it, jest } from '@jest/globals';
 import { buildCapturePayload, CapturePayload, createCaptureScheduler } from '../src/capture';
 
 describe('capture', () => {

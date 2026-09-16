@@ -1,4 +1,3 @@
-import { describe, expect, it } from '@jest/globals';
 import { parseActiveWindowId, parseWindowMeta } from './x11-parser';
 
 describe('parseActiveWindowId', () => {

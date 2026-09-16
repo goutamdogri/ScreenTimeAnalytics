@@ -1,4 +1,3 @@
-import { describe, expect, it } from '@jest/globals';
 import { browseEvent, focusEvent, idleEvent, mediaEvent } from '../src/event-builder';
 
 const TS = '2026-02-01T10:00:00.000Z';

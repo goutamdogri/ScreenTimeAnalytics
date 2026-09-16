@@ -1,4 +1,3 @@
-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { ConfigService } from '@nestjs/config';
 import {
   buildProvider,
@@ -24,10 +23,12 @@ jest.mock('@screen-time/llm-client', () => {
 });
 
 const isOllamaReachableMock = isOllamaReachable as unknown as jest.Mock<
-  (baseUrl: string) => Promise<boolean>
+  Promise<boolean>,
+  [baseUrl: string]
 >;
 const discoverOllamaModelsMock = discoverOllamaModels as unknown as jest.Mock<
-  (baseUrl: string) => Promise<string[]>
+  Promise<string[]>,
+  [baseUrl: string]
 >;
 const buildProviderMock = buildProvider as unknown as jest.Mock;
 
@@ -39,7 +40,7 @@ describe('LlmProvidersService', () => {
   ) {
     const llmConfigService = {
       findByUser: jest
-        .fn<(userId: string) => Promise<Partial<LlmConfig> | null>>()
+        .fn<Promise<Partial<LlmConfig> | null>, [userId: string]>()
         .mockResolvedValue(options.config ?? null),
       decryptKey: jest.fn().mockReturnValue(options.decryptKey ?? null),
     };

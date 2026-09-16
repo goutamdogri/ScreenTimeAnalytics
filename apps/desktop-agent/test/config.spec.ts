@@ -1,4 +1,3 @@
-import { afterEach, describe, expect, it } from '@jest/globals';
 import { validateConfig } from '../src/config';
 
 const originalEnv = { ...process.env };

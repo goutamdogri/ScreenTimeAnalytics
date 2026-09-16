@@ -1,4 +1,3 @@
-import { describe, expect, it, jest } from '@jest/globals';
 import { Category } from '@screen-time/core';
 import { ClassificationCache } from '@screen-time/db';
 import { LLMClassification } from '@screen-time/llm-client';
@@ -99,9 +98,7 @@ describe('ClassificationService', () => {
 
   describe('queue', () => {
     it('scopes pending events to uncategorized rows of users with LLM config', async () => {
-      const findMany = jest
-        .fn<(...args: unknown[]) => Promise<PendingEvent[]>>()
-        .mockResolvedValue([]);
+      const findMany = jest.fn<Promise<PendingEvent[]>, unknown[]>().mockResolvedValue([]);
       const service = new ClassificationService(prismaMock({ findMany }));
       await service.findPending(50);
       expect(findMany).toHaveBeenCalledWith(
@@ -123,9 +120,7 @@ describe('ClassificationService', () => {
         metadata: { url: 'https://example.com/watch?v=1' },
         device: { userId: 'user-1' },
       };
-      const findMany = jest
-        .fn<(...args: unknown[]) => Promise<PendingEvent[]>>()
-        .mockResolvedValue([event]);
+      const findMany = jest.fn<Promise<PendingEvent[]>, unknown[]>().mockResolvedValue([event]);
       const service = new ClassificationService(prismaMock({ findMany }));
       await expect(service.findPending(1)).resolves.toEqual([event]);
       const firstCall = findMany.mock.calls[0] as unknown as [
@@ -140,7 +135,7 @@ describe('ClassificationService', () => {
   describe('caching and writes', () => {
     it('reads the per-URL cache', async () => {
       const findUnique = jest
-        .fn<(...args: unknown[]) => Promise<ClassificationCache | null>>()
+        .fn<Promise<ClassificationCache | null>, unknown[]>()
         .mockResolvedValue(null);
       const service = new ClassificationService(prismaMock({ findUnique }));
       await service.findCached('https://a.b');

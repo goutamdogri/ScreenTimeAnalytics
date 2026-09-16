@@ -200,9 +200,6 @@ importers:
         specifier: ^7.8.2
         version: 7.8.2
     devDependencies:
-      '@jest/globals':
-        specifier: ^30.5.1
-        version: 30.5.1
       '@nestjs/cli':
         specifier: ^11.0.24
         version: 11.0.24(@types/node@24.13.4)(prettier@3.9.6)(uglify-js@3.19.3)
@@ -255,9 +252,6 @@ importers:
         specifier: workspace:*
         version: link:../../packages/core
     devDependencies:
-      '@jest/globals':
-        specifier: ^30.5.1
-        version: 30.5.1
       '@screen-time/api-contract':
         specifier: workspace:*
         version: link:../../packages/api-contract
@@ -285,9 +279,6 @@ importers:
 
   apps/extension:
     devDependencies:
-      '@jest/globals':
-        specifier: ^30.5.1
-        version: 30.5.1
       '@types/chrome':
         specifier: ^0.0.268
         version: 0.0.268
@@ -310,9 +301,6 @@ importers:
         specifier: ^0.10.2
         version: 0.10.2
     devDependencies:
-      '@jest/globals':
-        specifier: ^30.5.1
-        version: 30.5.1
       '@types/jest':
         specifier: ^30.0.0
         version: 30.0.0
@@ -343,9 +331,6 @@ importers:
 
   packages/core:
     devDependencies:
-      '@jest/globals':
-        specifier: ^30.5.1
-        version: 30.5.1
       '@types/jest':
         specifier: ^30.0.0
         version: 30.0.0
@@ -399,9 +384,6 @@ importers:
         specifier: workspace:^
         version: link:../core
     devDependencies:
-      '@jest/globals':
-        specifier: ^30.5.1
-        version: 30.5.1
       '@types/jest':
         specifier: ^30.0.0
         version: 30.0.0

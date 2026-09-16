@@ -1,4 +1,3 @@
-import { describe, expect, it, jest } from '@jest/globals';
 import { LlmConfig } from '@screen-time/db';
 import { LlmConfigService } from './llm-config.service';
 import { SaveLlmConfigDto } from './dto/llm.dto';
@@ -27,12 +26,10 @@ describe('LlmConfigService', () => {
     };
     const prisma = {
       llmConfig: {
-        findUnique: jest
-          .fn<(...args: unknown[]) => Promise<LlmConfig | null>>()
-          .mockResolvedValue(null),
-        upsert: jest.fn<(...args: unknown[]) => Promise<LlmConfig>>().mockResolvedValue(config),
+        findUnique: jest.fn<Promise<LlmConfig | null>, unknown[]>().mockResolvedValue(config),
+        upsert: jest.fn<Promise<LlmConfig>, unknown[]>().mockResolvedValue(config),
         deleteMany: jest
-          .fn<(...args: unknown[]) => Promise<{ count: number }>>()
+          .fn<Promise<{ count: number }>, unknown[]>()
           .mockResolvedValue({ count: 1 }),
       },
     };
@@ -66,10 +63,10 @@ describe('LlmConfigService', () => {
       config: { encryptedApiKey: 'enc:old-key' },
     });
     const configService = service as unknown as {
-      findByUser: jest.Mock<(userId: string) => Promise<{ encryptedApiKey: string }>>;
+      findByUser: jest.Mock<Promise<{ encryptedApiKey: string }>, [userId: string]>;
     };
     configService.findByUser = jest
-      .fn<(userId: string) => Promise<{ encryptedApiKey: string }>>()
+      .fn<Promise<{ encryptedApiKey: string }>, [userId: string]>()
       .mockResolvedValue({
         encryptedApiKey: 'enc:old-key',
       });

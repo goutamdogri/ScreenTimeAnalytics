@@ -1,4 +1,3 @@
-import { describe, expect, it, jest } from '@jest/globals';
 import { ConflictException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
@@ -151,25 +150,26 @@ describe('AuthService', () => {
 
     it('rotates a valid refresh token and revokes the original', async () => {
       const updateMany = jest
-        .fn<() => Promise<{ count: number }>>()
+        .fn<Promise<{ count: number }>, []>()
         .mockResolvedValueOnce({ count: 1 }) // first rotation succeeds
         .mockResolvedValueOnce({ count: 0 }); // reuse: already revoked
       const { service } = buildAuthService({
         user: {
           findUniqueOrThrow: jest
-            .fn<() => Promise<{ id: string; email: string; createdAt: Date }>>()
+            .fn<Promise<{ id: string; email: string; createdAt: Date }>, []>()
             .mockResolvedValue({ id: FAKE_USER_ID, email: FAKE_EMAIL, createdAt: new Date() }),
         },
         refreshToken: {
           findUnique: jest
             .fn<
-              () => Promise<{
+              Promise<{
                 id: string;
                 userId: string;
                 jti: string;
                 expiresAt: Date;
                 revokedAt: null;
-              } | null>
+              } | null>,
+              []
             >()
             .mockResolvedValueOnce({
               id: randomUUID(),

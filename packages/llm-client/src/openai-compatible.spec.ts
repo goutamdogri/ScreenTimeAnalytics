@@ -1,4 +1,3 @@
-import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import { openAiCompatible } from './openai-compatible';
 import { ProviderHttpError } from './http';
 

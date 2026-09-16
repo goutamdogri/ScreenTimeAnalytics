@@ -15,7 +15,6 @@
     "dbus-next": "^0.10.2"
   },
   "devDependencies": {
-    "@jest/globals": "^30.5.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.0.0",
     "jest": "^30.5.1",

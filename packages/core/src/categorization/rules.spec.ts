@@ -1,4 +1,3 @@
-import { describe, expect, it } from '@jest/globals';
 import { Category } from './categories';
 import { DEFAULT_CATEGORY_RULES, CategoryRule } from './rules';
 

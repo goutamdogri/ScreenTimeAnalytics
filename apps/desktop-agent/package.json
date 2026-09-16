@@ -21,7 +21,6 @@
     "@screen-time/core": "workspace:*"
   },
   "devDependencies": {
-    "@jest/globals": "^30.5.1",
     "@screen-time/api-contract": "workspace:*",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.0.0",

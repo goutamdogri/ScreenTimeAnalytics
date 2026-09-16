@@ -1,4 +1,3 @@
-import { describe, expect, it } from '@jest/globals';
 import { durationToMilliseconds } from './duration';
 
 describe('durationToMilliseconds', () => {

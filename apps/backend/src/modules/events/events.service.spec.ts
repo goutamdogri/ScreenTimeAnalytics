@@ -1,4 +1,3 @@
-import { describe, expect, it, jest } from '@jest/globals';
 import { EventsService } from './events.service';
 import { ClassificationService } from '../classification/classification.service';
 
@@ -14,7 +13,7 @@ describe('EventsService', () => {
   describe('ingest', () => {
     it('returns accepted + duplicates counts for a deduped batch', async () => {
       const createMany = jest
-        .fn<(args: CreateManyArgs) => Promise<{ count: number }>>()
+        .fn<Promise<{ count: number }>, [args: CreateManyArgs]>()
         .mockResolvedValue({ count: 2 });
       const service = new EventsService(prismaMock(createMany), classification);
       const result = await service.ingest(DEVICE_ID, [
@@ -58,7 +57,7 @@ describe('EventsService', () => {
 
     it('stores the rule-based category synchronously at ingest', async () => {
       const createMany = jest
-        .fn<(args: CreateManyArgs) => Promise<{ count: number }>>()
+        .fn<Promise<{ count: number }>, [args: CreateManyArgs]>()
         .mockResolvedValue({ count: 3 });
       const service = new EventsService(prismaMock(createMany), classification);
       await service.ingest(DEVICE_ID, [
@@ -86,7 +85,7 @@ describe('EventsService', () => {
 
     it('leaves rule-missed events uncategorized for the content layer', async () => {
       const createMany = jest
-        .fn<(args: CreateManyArgs) => Promise<{ count: number }>>()
+        .fn<Promise<{ count: number }>, [args: CreateManyArgs]>()
         .mockResolvedValue({ count: 1 });
       const service = new EventsService(prismaMock(createMany), classification);
       await service.ingest(DEVICE_ID, [
@@ -102,7 +101,7 @@ describe('EventsService', () => {
 
     it('maps optional metadata into the payload', async () => {
       const createMany = jest
-        .fn<(args: CreateManyArgs) => Promise<{ count: number }>>()
+        .fn<Promise<{ count: number }>, [args: CreateManyArgs]>()
         .mockResolvedValue({ count: 1 });
       const service = new EventsService(prismaMock(createMany), classification);
       await service.ingest(DEVICE_ID, [

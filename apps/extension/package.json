@@ -10,7 +10,6 @@
     "test": "jest"
   },
   "devDependencies": {
-    "@jest/globals": "^30.5.1",
     "@types/chrome": "^0.0.268",
     "@types/jest": "^30.0.0",
     "jest": "^30.5.1",

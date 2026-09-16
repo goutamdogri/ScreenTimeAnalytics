@@ -1,4 +1,3 @@
-import { afterEach, describe, expect, it, jest } from '@jest/globals';
 import { ollamaProvider, discoverOllamaModels, isOllamaReachable } from './ollama';
 
 describe('OllamaProvider', () => {
