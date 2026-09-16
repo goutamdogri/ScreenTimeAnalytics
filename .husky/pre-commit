@@ -7,4 +7,7 @@ if [ "$branch" = "main" ]; then
 fi
 
 pnpm typecheck
-pnpm lint-staged
+# --concurrent=1 serializes the prettier and eslint passes so their combined
+# memory stays under the machine's limit (both runs of a large staged set
+# used to get OOM-killed otherwise).
+pnpm lint-staged --concurrent=1
