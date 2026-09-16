@@ -48,6 +48,11 @@ describe('OllamaProvider', () => {
     await expect(discoverOllamaModels(baseUrl)).resolves.toEqual([]);
   });
 
+  it('discoverOllamaModels tolerates an unreachable host', async () => {
+    fetchSpy.mockRejectedValue(new Error('connection refused'));
+    await expect(discoverOllamaModels(baseUrl)).resolves.toEqual([]);
+  });
+
   it('isOllamaReachable reports availability', async () => {
     fetchSpy.mockResolvedValue(new Response(JSON.stringify({ models: [] }), { status: 200 }));
     await expect(isOllamaReachable(baseUrl)).resolves.toBe(true);

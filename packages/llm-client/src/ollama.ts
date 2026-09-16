@@ -54,13 +54,17 @@ export function ollamaProvider(options: OllamaOptions): LLMProvider {
 
 /** Pulled model list for `GET /api/tags` (design doc §3.3 auto-detection). */
 export async function discoverOllamaModels(baseUrl: string): Promise<string[]> {
-  const data = (await getJson(`${baseUrl}/api/tags`)) as { models?: { name?: string }[] };
-  if (!Array.isArray(data.models)) {
+  try {
+    const data = (await getJson(`${baseUrl}/api/tags`, 3_000)) as { models?: { name?: string }[] };
+    if (!Array.isArray(data.models)) {
+      return [];
+    }
+    return data.models
+      .map((model) => model.name)
+      .filter((name): name is string => typeof name === 'string' && name.length > 0);
+  } catch {
     return [];
   }
-  return data.models
-    .map((model) => model.name)
-    .filter((name): name is string => typeof name === 'string' && name.length > 0);
 }
 
 /** Cheap reachability probe used by `GET /llm/providers`. */

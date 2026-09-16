@@ -38,10 +38,19 @@ export class LlmProvidersService {
     const hasKey = (provider: ProviderDescriptor): boolean =>
       userConfig?.provider === provider.id && Boolean(userConfig.encryptedApiKey);
 
-    const [ollamaReachable, ollamaModels] = await Promise.all([
-      isOllamaReachable(this.ollamaBaseUrl),
-      discoverOllamaModels(this.ollamaBaseUrl),
-    ]);
+    let local: { available: boolean; models: string[] };
+    try {
+      const [ollamaReachable, ollamaModels] = await Promise.all([
+        isOllamaReachable(this.ollamaBaseUrl),
+        discoverOllamaModels(this.ollamaBaseUrl),
+      ]);
+      local = { available: ollamaReachable, models: ollamaModels };
+    } catch (error) {
+      this.logger.warn(
+        `Ollama probe failed: ${(error as Error).message}. Reporting local provider as unavailable.`,
+      );
+      local = { available: false, models: [] };
+    }
 
     const cloudItems: CloudProviderItemDto[] = Object.values(PROVIDER_CATALOG)
       .filter((descriptor) => descriptor.available && descriptor.id !== 'ollama')
@@ -53,10 +62,7 @@ export class LlmProvidersService {
       }));
 
     return {
-      local: {
-        available: ollamaReachable,
-        models: ollamaModels,
-      },
+      local,
       cloud: { items: cloudItems },
     };
   }
