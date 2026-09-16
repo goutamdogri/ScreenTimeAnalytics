@@ -7,6 +7,7 @@ import { envFilePaths } from './config/env-paths';
 import { validateEnvironment } from './config/validation';
 import { AuthModule } from './modules/auth/auth.module';
 import { DevicesModule } from './modules/devices/devices.module';
+import { EventsModule } from './modules/events/events.module';
 import { PrismaModule } from './modules/prisma/prisma.module';
 
 @Module({
@@ -21,6 +22,7 @@ import { PrismaModule } from './modules/prisma/prisma.module';
     PrismaModule,
     AuthModule,
     DevicesModule,
+    EventsModule,
   ],
   controllers: [AppController],
   providers: [AppService, ConfigService],

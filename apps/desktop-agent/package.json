@@ -1,0 +1,33 @@
+{
+  "name": "@screen-time/desktop-agent",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Desktop agent: platform adapters, local event buffering, and sync to the backend API (Phase 2)",
+  "main": "dist/cli.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "screen-time-agent": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "start": "node dist/cli.js run",
+    "dev": "node --watch dist/cli.js run",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint \"src/**/*.ts\"",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@screen-time/adapters": "workspace:*",
+    "@screen-time/core": "workspace:*"
+  },
+  "devDependencies": {
+    "@screen-time/api-contract": "workspace:*",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^24.0.0",
+    "@types/supertest": "^6.0.0",
+    "jest": "^30.5.1",
+    "supertest": "^7.2.2",
+    "ts-jest": "^29.4.12",
+    "typescript": "~5.9.3"
+  }
+}

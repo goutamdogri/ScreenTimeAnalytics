@@ -9,6 +9,7 @@ allowBuilds:
   argon2: true
   prisma: true
   unrs-resolver: true
+  usocket: true
 
 minimumReleaseAgeExclude:
   - '@nestjs/common@11.2.5'
