@@ -31,6 +31,10 @@ services:
       JWT_REFRESH_TTL: 7d
       PORT: '3000'
       NODE_ENV: development
+      ENCRYPTION_MASTER_KEY: change-me-32-byte-base64-master-key
+      LLM_OLLAMA_URL: http://host.docker.internal:11434
+      CLASSIFICATION_POLL_MS: '30000'
+      CLASSIFICATION_BATCH_SIZE: '50'
     depends_on:
       db:
         condition: service_healthy

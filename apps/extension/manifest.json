@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "Screen Time Analytics",
+  "version": "0.1.0",
+  "description": "Reports the active tab to the local Screen Time Analytics desktop agent for content categorization.",
+  "permissions": ["tabs"],
+  "host_permissions": ["http://127.0.0.1:8765/*"],
+  "background": {
+    "service_worker": "dist/background.js",
+    "type": "module"
+  }
+}

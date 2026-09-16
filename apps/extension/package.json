@@ -1,0 +1,20 @@
+{
+  "name": "@screen-time/extension",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Chrome MV3 extension: reports the active tab's URL/title to the local desktop agent (Phase 3)",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint \"src/**/*.ts\"",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@jest/globals": "^30.5.1",
+    "@types/chrome": "^0.0.268",
+    "@types/jest": "^30.0.0",
+    "jest": "^30.5.1",
+    "ts-jest": "^29.4.12",
+    "typescript": "~5.9.3"
+  }
+}

@@ -358,6 +358,108 @@
         "tags": ["devices"]
       }
     },
+    "/llm/providers": {
+      "get": {
+        "operationId": "LlmController_providers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderAvailabilityResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List available LLM providers (local Ollama auto-detected) with per-user configuration state",
+        "tags": ["llm"]
+      }
+    },
+    "/llm/config": {
+      "get": {
+        "operationId": "LlmController_getConfig",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LlmConfigResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No LLM configuration yet"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the user’s LLM settings; the API key is never returned",
+        "tags": ["llm"]
+      },
+      "put": {
+        "operationId": "LlmController_putConfig",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveLlmConfigDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LlmConfigResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Save LLM provider settings; the API key is stored encrypted at rest",
+        "tags": ["llm"]
+      },
+      "delete": {
+        "operationId": "LlmController_clearConfig",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Clear LLM settings and revert to rule-only classification",
+        "tags": ["llm"]
+      }
+    },
     "/events": {
       "post": {
         "operationId": "EventsController_ingest",
@@ -553,6 +655,115 @@
             "enum": ["linux-x11", "linux-wayland", "windows", "macos", "unknown"]
           }
         }
+      },
+      "LocalProviderAvailabilityDto": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "example": true
+          },
+          "models": {
+            "example": ["llama3.1:8b"],
+            "description": "Models pulled on the local Ollama instance",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["available", "models"]
+      },
+      "CloudProviderItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": ["openai", "groq", "gemini", "ollama"]
+          },
+          "label": {
+            "type": "string",
+            "example": "OpenAI"
+          },
+          "configured": {
+            "type": "boolean",
+            "description": "Whether this provider has a stored key for the current user"
+          },
+          "models": {
+            "example": ["gpt-4o-mini", "gpt-4o"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["id", "label", "configured", "models"]
+      },
+      "CloudProvidersDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CloudProviderItemDto"
+            }
+          }
+        },
+        "required": ["items"]
+      },
+      "ProviderAvailabilityResponse": {
+        "type": "object",
+        "properties": {
+          "local": {
+            "$ref": "#/components/schemas/LocalProviderAvailabilityDto"
+          },
+          "cloud": {
+            "$ref": "#/components/schemas/CloudProvidersDto"
+          }
+        },
+        "required": ["local", "cloud"]
+      },
+      "LlmConfigResponse": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": ["openai", "groq", "gemini", "ollama"]
+          },
+          "model": {
+            "type": "string",
+            "example": "gpt-4o-mini"
+          },
+          "hasApiKey": {
+            "type": "boolean",
+            "description": "True when an API key is stored (never returned)"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": ["provider", "model", "hasApiKey", "updatedAt"]
+      },
+      "SaveLlmConfigDto": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": ["openai", "groq", "gemini", "ollama"],
+            "example": "openai"
+          },
+          "model": {
+            "type": "string",
+            "example": "gpt-4o-mini",
+            "maxLength": 200
+          },
+          "apiKey": {
+            "type": "string",
+            "description": "Provider API key. Omitted on update to keep the existing stored key.",
+            "minLength": 8
+          }
+        },
+        "required": ["provider", "model"]
       },
       "IngestEventDto": {
         "type": "object",

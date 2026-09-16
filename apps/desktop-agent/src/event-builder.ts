@@ -59,6 +59,8 @@ export interface BrowseEventInput {
 }
 
 export function browseEvent(input: BrowseEventInput): RawEventPayload {
+  // Top-level `url`/`windowTitle` drive the backend categorization pipeline;
+  // `metadata` stays for backward-compatible legacy readers.
   const meta: Record<string, unknown> = { url: input.url };
   if (input.title) meta.title = input.title;
   return {
@@ -66,6 +68,8 @@ export function browseEvent(input: BrowseEventInput): RawEventPayload {
     source: 'extension',
     eventType: 'browse',
     app: 'browser',
+    url: input.url,
+    windowTitle: input.title,
     metadata: meta,
   };
 }

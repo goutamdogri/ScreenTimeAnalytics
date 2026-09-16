@@ -4,6 +4,9 @@ const dotenv = require('dotenv');
 dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 
 module.exports = async () => {
+  // The classification worker polls the DB and calls real providers — keep it
+  // out of the e2e run so tests don't race with async enrichment.
+  process.env.CLASSIFICATION_WORKER_DISABLED = '1';
   if (!process.env.DATABASE_URL) {
     throw new Error(
       'DATABASE_URL must be set for e2e tests. Copy .env.example to .env and start Postgres first.',

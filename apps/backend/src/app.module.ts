@@ -8,6 +8,9 @@ import { validateEnvironment } from './config/validation';
 import { AuthModule } from './modules/auth/auth.module';
 import { DevicesModule } from './modules/devices/devices.module';
 import { EventsModule } from './modules/events/events.module';
+import { CryptoModule } from './modules/crypto/crypto.module';
+import { LlmModule } from './modules/llm/llm.module';
+import { ClassificationModule } from './modules/classification/classification.module';
 import { PrismaModule } from './modules/prisma/prisma.module';
 
 @Module({
@@ -20,8 +23,11 @@ import { PrismaModule } from './modules/prisma/prisma.module';
       cache: true,
     }),
     PrismaModule,
+    CryptoModule,
     AuthModule,
     DevicesModule,
+    ClassificationModule,
+    LlmModule,
     EventsModule,
   ],
   controllers: [AppController],
