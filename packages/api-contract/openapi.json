@@ -524,6 +524,214 @@
           "events"
         ]
       }
+    },
+    "/dashboard/summary": {
+      "get": {
+        "operationId": "DashboardController_getSummary",
+        "parameters": [
+          {
+            "name": "date",
+            "required": false,
+            "in": "query",
+            "description": "Date in YYYY-MM-DD format (default: today UTC)",
+            "schema": {
+              "example": "2026-09-16",
+              "type": "string"
+            }
+          },
+          {
+            "name": "tz",
+            "required": false,
+            "in": "query",
+            "description": "IANA timezone (default: UTC)",
+            "schema": {
+              "example": "Asia/Kolkata",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSummaryResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Today's screen time summary: totals, intentionality split, category breakdown",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/dashboard/trends": {
+      "get": {
+        "operationId": "DashboardController_getTrends",
+        "parameters": [
+          {
+            "name": "range",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "week",
+              "type": "string",
+              "enum": [
+                "week",
+                "month",
+                "quarter"
+              ]
+            }
+          },
+          {
+            "name": "tz",
+            "required": false,
+            "in": "query",
+            "description": "IANA timezone (default: UTC)",
+            "schema": {
+              "example": "Asia/Kolkata",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardTrendsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Per-day category minutes for trend charts",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/dashboard/categories": {
+      "get": {
+        "operationId": "DashboardController_getCategories",
+        "parameters": [
+          {
+            "name": "range",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "default": "week",
+              "type": "string",
+              "enum": [
+                "week",
+                "month",
+                "quarter"
+              ]
+            }
+          },
+          {
+            "name": "tz",
+            "required": false,
+            "in": "query",
+            "description": "IANA timezone (default: UTC)",
+            "schema": {
+              "example": "Asia/Kolkata",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardCategoriesResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Per-category totals with top apps",
+        "tags": [
+          "dashboard"
+        ]
+      }
+    },
+    "/dashboard/sessions": {
+      "get": {
+        "operationId": "DashboardController_getSessions",
+        "parameters": [
+          {
+            "name": "from",
+            "required": false,
+            "in": "query",
+            "description": "ISO-8601 start (default: 7 days ago)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "required": false,
+            "in": "query",
+            "description": "ISO-8601 end (default: now)",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tz",
+            "required": false,
+            "in": "query",
+            "description": "IANA timezone (default: UTC)",
+            "schema": {
+              "example": "Asia/Kolkata",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSessionsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Derived focus sessions (time-gapped from raw events)",
+        "tags": [
+          "dashboard"
+        ]
+      }
     }
   },
   "info": {
@@ -955,6 +1163,266 @@
         },
         "required": [
           "events"
+        ]
+      },
+      "CategoryMinuteDto": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "example": "deep_work"
+          },
+          "minutes": {
+            "type": "number",
+            "example": 120
+          },
+          "share": {
+            "type": "number",
+            "example": 0.45
+          }
+        },
+        "required": [
+          "category",
+          "minutes",
+          "share"
+        ]
+      },
+      "DashboardSummaryResponse": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "example": "2026-09-16"
+          },
+          "totalMinutes": {
+            "type": "number",
+            "example": 268
+          },
+          "focusMinutes": {
+            "type": "number",
+            "example": 142
+          },
+          "autopilotMinutes": {
+            "type": "number",
+            "example": 86
+          },
+          "neutralMinutes": {
+            "type": "number",
+            "example": 40
+          },
+          "byCategory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CategoryMinuteDto"
+            }
+          },
+          "sessionCount": {
+            "type": "number",
+            "example": 12
+          },
+          "activeDevices": {
+            "type": "number",
+            "example": 2
+          }
+        },
+        "required": [
+          "date",
+          "totalMinutes",
+          "focusMinutes",
+          "autopilotMinutes",
+          "neutralMinutes",
+          "byCategory",
+          "sessionCount",
+          "activeDevices"
+        ]
+      },
+      "TrendDayCategoryDto": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "example": "deep_work"
+          },
+          "minutes": {
+            "type": "number",
+            "example": 90
+          }
+        },
+        "required": [
+          "category",
+          "minutes"
+        ]
+      },
+      "TrendDayDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "example": "2026-09-10"
+          },
+          "totalMinutes": {
+            "type": "number",
+            "example": 310
+          },
+          "byCategory": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrendDayCategoryDto"
+            }
+          }
+        },
+        "required": [
+          "date",
+          "totalMinutes",
+          "byCategory"
+        ]
+      },
+      "DashboardTrendsResponse": {
+        "type": "object",
+        "properties": {
+          "range": {
+            "type": "string",
+            "enum": [
+              "week",
+              "month",
+              "quarter"
+            ]
+          },
+          "days": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrendDayDto"
+            }
+          }
+        },
+        "required": [
+          "range",
+          "days"
+        ]
+      },
+      "TopAppDto": {
+        "type": "object",
+        "properties": {
+          "app": {
+            "type": "string",
+            "example": "code"
+          },
+          "minutes": {
+            "type": "number",
+            "example": 145
+          }
+        },
+        "required": [
+          "app",
+          "minutes"
+        ]
+      },
+      "CategoryTotalDto": {
+        "type": "object",
+        "properties": {
+          "category": {
+            "type": "string",
+            "example": "deep_work"
+          },
+          "minutes": {
+            "type": "number",
+            "example": 420
+          },
+          "share": {
+            "type": "number",
+            "example": 0.38
+          },
+          "topApps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TopAppDto"
+            }
+          }
+        },
+        "required": [
+          "category",
+          "minutes",
+          "share",
+          "topApps"
+        ]
+      },
+      "DashboardCategoriesResponse": {
+        "type": "object",
+        "properties": {
+          "range": {
+            "type": "string",
+            "enum": [
+              "week",
+              "month",
+              "quarter"
+            ]
+          },
+          "totals": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CategoryTotalDto"
+            }
+          }
+        },
+        "required": [
+          "range",
+          "totals"
+        ]
+      },
+      "SessionDto": {
+        "type": "object",
+        "properties": {
+          "startedAt": {
+            "type": "string",
+            "example": "2026-09-16T10:05:00.000Z"
+          },
+          "endedAt": {
+            "type": "string",
+            "example": "2026-09-16T10:32:00.000Z"
+          },
+          "durationMin": {
+            "type": "number",
+            "example": 27
+          },
+          "app": {
+            "type": "object",
+            "example": "code"
+          },
+          "windowTitle": {
+            "type": "object",
+            "example": "schema.prisma"
+          },
+          "category": {
+            "type": "string",
+            "example": "deep_work"
+          },
+          "source": {
+            "type": "string",
+            "example": "x11"
+          }
+        },
+        "required": [
+          "startedAt",
+          "endedAt",
+          "durationMin",
+          "app",
+          "windowTitle",
+          "category",
+          "source"
+        ]
+      },
+      "DashboardSessionsResponse": {
+        "type": "object",
+        "properties": {
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionDto"
+            }
+          }
+        },
+        "required": [
+          "sessions"
         ]
       }
     }

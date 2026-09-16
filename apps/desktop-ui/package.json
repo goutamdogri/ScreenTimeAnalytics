@@ -1,0 +1,39 @@
+{
+  "name": "@screen-time/desktop-ui",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Phase 4 desktop dashboard — Electron + React, a pure API client over @screen-time/api-contract",
+  "main": "dist/electron/main.js",
+  "scripts": {
+    "dev": "node scripts/dev.mjs",
+    "build": "pnpm build:renderer && pnpm build:electron",
+    "build:renderer": "vite build",
+    "build:electron": "tsc -p tsconfig.electron.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.electron.json",
+    "lint": "eslint \"src/**/*.{ts,tsx}\" \"electron/**/*.ts\" \"scripts/**/*.mjs\"",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "openapi-fetch": "^0.17.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0"
+  },
+  "devDependencies": {
+    "@screen-time/api-contract": "workspace:*",
+    "@screen-time/core": "workspace:*",
+    "@testing-library/jest-dom": "^6.9.0",
+    "@testing-library/react": "^16.3.3",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.1",
+    "electron": "^44.4.1",
+    "electron-builder": "^26.15.3",
+    "jsdom": "^30.0.1",
+    "typescript": "~5.9.3",
+    "vite": "^8.3.0",
+    "vitest": "^5.0.1"
+  }
+}

@@ -1,0 +1,16 @@
+appId: com.screen-time.dashboard
+productName: Screen Time
+directories:
+  output: release
+files:
+  - dist/**/*
+  - package.json
+linux:
+  target:
+    - AppImage
+win:
+  target:
+    - nsis
+mac:
+  target:
+    - dmg

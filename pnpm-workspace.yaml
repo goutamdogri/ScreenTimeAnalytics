@@ -7,9 +7,15 @@ allowBuilds:
   '@prisma/engines': true
   '@scarf/scarf': true
   argon2: true
+  electron: true
+  electron-winstaller: false
   prisma: true
   unrs-resolver: true
   usocket: true
+
+# Windows-only installers (electron-winstaller via electron-builder) carry build
+# scripts we never need; treat their ignored builds as a warning, not an error.
+strictDepBuilds: false
 
 minimumReleaseAgeExclude:
   - '@nestjs/common@11.2.5'
@@ -24,4 +30,5 @@ minimumReleaseAgeExclude:
   - '@turbo/linux-static-arm64@2.10.13'
   - '@turbo/windows-64@2.10.13'
   - '@turbo/windows-arm64@2.10.13'
-  - 'turbo@2.10.13'
+  - turbo@2.10.13
+  - electron@44.4.1
