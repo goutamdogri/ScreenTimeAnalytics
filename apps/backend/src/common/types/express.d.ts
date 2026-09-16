@@ -4,6 +4,8 @@ declare global {
   namespace Express {
     interface Request {
       id?: string;
+      /** Populated by DeviceTokenGuard with { deviceId, userId }. */
+      device?: { deviceId: string; userId: string };
     }
   }
 }

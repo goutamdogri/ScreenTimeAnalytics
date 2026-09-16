@@ -1,4 +1,4 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { DevicesService } from './devices.service';
 
 describe('DevicesService', () => {
@@ -8,17 +8,15 @@ describe('DevicesService', () => {
     it('creates a device with generated deviceToken', async () => {
       const prismaMock = {
         device: {
-          findMany: jest.fn().mockResolvedValue([]),
-          create: jest
-            .fn()
-            .mockImplementation(({ data }: { data: any }) =>
-              Promise.resolve({
-                ...data,
-                id: 'device-1',
-                createdAt: new Date(),
-                updatedAt: new Date(),
-              }),
-            ),
+          findUnique: jest.fn().mockResolvedValue(null),
+          create: jest.fn().mockImplementation(({ data }: { data: any }) =>
+            Promise.resolve({
+              ...data,
+              id: 'device-1',
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            }),
+          ),
         },
       };
       const service = new DevicesService(prismaMock as any);
@@ -28,17 +26,28 @@ describe('DevicesService', () => {
       expect(result.name).toBe('My PC');
     });
 
-    it('throws BadRequestException when name is taken', async () => {
+    it('returns the existing device (idempotent) when the name is already registered', async () => {
+      const existingDevice = {
+        id: 'existing',
+        userId: FAKE_USER_ID,
+        name: 'My PC',
+        platform: 'windows',
+        deviceToken: 'existing-token',
+        lastSeenAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const createMock = jest.fn();
       const prismaMock = {
         device: {
-          findMany: jest.fn().mockResolvedValue([{ id: 'existing' }]),
-          create: jest.fn(),
+          findUnique: jest.fn().mockResolvedValue(existingDevice),
+          create: createMock,
         },
       };
       const service = new DevicesService(prismaMock as any);
-      await expect(
-        service.register(FAKE_USER_ID, { name: 'My PC', platform: 'windows' }),
-      ).rejects.toThrow(BadRequestException);
+      const result = await service.register(FAKE_USER_ID, { name: 'My PC', platform: 'windows' });
+      expect(result).toBe(existingDevice);
+      expect(createMock).not.toHaveBeenCalled();
     });
   });
 
@@ -46,18 +55,16 @@ describe('DevicesService', () => {
     it('returns public fields only (no deviceToken)', async () => {
       const prismaMock = {
         device: {
-          findMany: jest
-            .fn()
-            .mockResolvedValue([
-              {
-                id: '1',
-                name: 'PC',
-                platform: 'windows',
-                lastSeenAt: null,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-              },
-            ]),
+          findMany: jest.fn().mockResolvedValue([
+            {
+              id: '1',
+              name: 'PC',
+              platform: 'windows',
+              lastSeenAt: null,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            },
+          ]),
         },
       };
       const service = new DevicesService(prismaMock as any);
@@ -105,20 +112,17 @@ describe('DevicesService', () => {
   });
 
   describe('heartbeat', () => {
-    it('throws NotFoundException for unknown deviceToken', async () => {
+    it('records lastSeenAt for a resolved deviceId', async () => {
+      const updateMock = jest.fn().mockResolvedValue({ id: '1', lastSeenAt: new Date() });
       const prismaMock = {
-        device: { updateMany: jest.fn().mockResolvedValue({ count: 0 }) },
+        device: { update: updateMock },
       };
       const service = new DevicesService(prismaMock as any);
-      await expect(service.heartbeat('unknown-token')).rejects.toThrow(NotFoundException);
-    });
-
-    it('succeeds for known deviceToken', async () => {
-      const prismaMock = {
-        device: { updateMany: jest.fn().mockResolvedValue({ count: 1 }) },
-      };
-      const service = new DevicesService(prismaMock as any);
-      await expect(service.heartbeat('known-token')).resolves.toBeUndefined();
+      await expect(service.heartbeat('device-id-1')).resolves.toBeUndefined();
+      expect(updateMock).toHaveBeenCalledWith({
+        where: { id: 'device-id-1' },
+        data: expect.objectContaining({ lastSeenAt: expect.any(Date) }),
+      });
     });
   });
 });

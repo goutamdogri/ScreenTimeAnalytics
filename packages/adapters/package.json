@@ -8,9 +8,14 @@
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "jest --passWithNoTests"
+    "lint": "eslint \"src/**/*.ts\"",
+    "test": "jest"
+  },
+  "dependencies": {
+    "dbus-next": "^0.10.2"
   },
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/node": "^24.0.0",
     "jest": "^30.5.1",
     "ts-jest": "^29.4.12",

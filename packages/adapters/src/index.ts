@@ -33,3 +33,10 @@ export interface PlatformAdapter {
   /** Frees any OS resources held by the adapter. */
   dispose(): void;
 }
+
+export { X11Adapter } from './x11/x11-adapter';
+export { MprisAdapter } from './mpris/mpris-adapter';
+export { mapMprisMetadata } from './mpris/mpris-metadata';
+export { createIdleProbe, createMprisBus } from './dbus/session-probe';
+export { parseActiveWindowId, parseWindowMeta } from './x11/x11-parser';
+export { runAdapterContractTests } from './testing/contract';

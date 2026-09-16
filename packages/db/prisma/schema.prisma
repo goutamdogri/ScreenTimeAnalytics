@@ -1,9 +1,9 @@
 generator client {
-  provider                = "prisma-client"
-  output                  = "../src/generated/prisma"
-  moduleFormat            = "cjs"
-  generatedFileExtension  = "ts"
-  importFileExtension     = ""
+  provider               = "prisma-client"
+  output                 = "../src/generated/prisma"
+  moduleFormat           = "cjs"
+  generatedFileExtension = "ts"
+  importFileExtension    = ""
 }
 
 datasource db {
@@ -12,12 +12,12 @@ datasource db {
 
 /// A registered end-user account. One user can own many devices.
 model User {
-  id           String         @id @default(uuid())
-  email        String         @unique
-  passwordHash String         @map("password_hash")
-  createdAt    DateTime       @default(now()) @map("created_at")
-  updatedAt    DateTime       @updatedAt @map("updated_at")
-  devices      Device[]
+  id            String         @id @default(uuid())
+  email         String         @unique
+  passwordHash  String         @map("password_hash")
+  createdAt     DateTime       @default(now()) @map("created_at")
+  updatedAt     DateTime       @updatedAt @map("updated_at")
+  devices       Device[]
   refreshTokens RefreshToken[]
 
   @@map("users")
@@ -25,16 +25,18 @@ model User {
 
 /// An OS agent instance registered under a user's account.
 model Device {
-  id          String    @id @default(uuid())
-  userId      String    @map("user_id")
+  id          String     @id @default(uuid())
+  userId      String     @map("user_id")
   name        String
   platform    String
-  deviceToken String    @unique @map("device_token")
-  lastSeenAt  DateTime? @map("last_seen_at")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceToken String     @unique @map("device_token")
+  lastSeenAt  DateTime?  @map("last_seen_at")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
+user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events      RawEvent[]
 
+  @@unique([userId, name])
   @@index([userId])
   @@map("devices")
 }
@@ -53,4 +55,35 @@ model RefreshToken {
 
   @@index([userId])
   @@map("refresh_tokens")
+}
+
+/// A single OS-level or extension-reported activity observation (design doc §6).
+///
+/// Sources: `x11` (active-window focus), `mpris` (now-playing media), `extension`
+/// (browser tab browse events). Idempotent ingestion is enforced by the unique
+/// `(device_id, timestamp, source)` key (design doc §8.4) — a crashed or restarted
+/// agent can resend a batch and the backend simply skips duplicates.
+model RawEvent {
+  id          String   @id @default(uuid())
+  deviceId    String   @map("device_id")
+  /// Client-reported event time (ISO-8601). The dedup key component.
+  timestamp   DateTime @db.Timestamptz
+  /// Origin of the observation: `x11` | `mpris` | `extension`.
+  source      String
+  /// Kind of observation: `focus` | `idle` | `media` | `browse`.
+  eventType   String   @map("event_type")
+  /// Process/app name when known (e.g. `code`, `spotify`).
+  app         String?
+  /// Focused window title or page title.
+  windowTitle String?  @map("window_title")
+  /// Page URL from the browser extension (browse events).
+  url         String?
+  /// Free-form structured payload (e.g. media track/artist, idle state).
+  metadata    Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+  device      Device   @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@unique([deviceId, timestamp, source])
+  @@index([deviceId, timestamp])
+  @@map("raw_events")
 }

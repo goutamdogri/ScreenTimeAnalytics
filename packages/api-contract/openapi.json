@@ -340,16 +340,7 @@
     "/devices/heartbeat": {
       "post": {
         "operationId": "DevicesController_heartbeat",
-        "parameters": [
-          {
-            "name": "x-device-token",
-            "required": true,
-            "in": "header",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "Activity recorded"
@@ -365,6 +356,35 @@
         ],
         "summary": "Report device activity (authenticated with the opaque device token)",
         "tags": ["devices"]
+      }
+    },
+    "/events": {
+      "post": {
+        "operationId": "EventsController_ingest",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IngestEventsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Batch accepted (duplicates reported)"
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "404": {
+            "description": "Unknown device token"
+          }
+        },
+        "summary": "Ingest a batch of raw events (authenticated with the opaque device token)",
+        "tags": ["events"]
       }
     }
   },
@@ -533,6 +553,61 @@
             "enum": ["linux-x11", "linux-wayland", "windows", "macos", "unknown"]
           }
         }
+      },
+      "IngestEventDto": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Client-reported event time (part of the dedup key)"
+          },
+          "source": {
+            "type": "string",
+            "enum": ["x11", "mpris", "extension"],
+            "description": "Origin of the observation"
+          },
+          "eventType": {
+            "type": "string",
+            "enum": ["focus", "idle", "media", "browse"],
+            "description": "Kind of observation"
+          },
+          "app": {
+            "type": "string",
+            "maxLength": 255,
+            "description": "Process/app name (e.g. code, spotify)"
+          },
+          "windowTitle": {
+            "type": "string",
+            "maxLength": 512,
+            "description": "Focused window title or page title"
+          },
+          "url": {
+            "type": "string",
+            "maxLength": 2048,
+            "description": "Page URL from the browser extension (browse events)"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Free-form structured payload (e.g. media track metadata)"
+          }
+        },
+        "required": ["timestamp", "source", "eventType"]
+      },
+      "IngestEventsDto": {
+        "type": "object",
+        "properties": {
+          "events": {
+            "maxItems": 1000,
+            "description": "Batch of raw events to ingest (deduplicated server-side)",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IngestEventDto"
+            }
+          }
+        },
+        "required": ["events"]
       }
     }
   }

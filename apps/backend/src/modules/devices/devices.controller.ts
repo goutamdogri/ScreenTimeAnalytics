@@ -3,7 +3,6 @@ import {
   Controller,
   Delete,
   Get,
-  Headers,
   HttpCode,
   HttpStatus,
   Param,
@@ -14,6 +13,9 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { AuthenticatedUser, CurrentUser } from '../../common/decorators/current-user.decorator';
+import { CurrentDevice } from './current-device.decorator';
+import { AuthenticatedDevice } from './guards/device-token.guard';
+import { DeviceTokenGuard } from './guards/device-token.guard';
 import { DeviceDto } from './dto/device-response.dto';
 import { RegisterDeviceDto, UpdateDeviceDto } from './dto/device.dto';
 import { DevicesService } from './devices.service';
@@ -73,14 +75,15 @@ export class DevicesController {
   }
 
   @Post('heartbeat')
+  @UseGuards(DeviceTokenGuard)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Report device activity (authenticated with the opaque device token)',
   })
   @ApiResponse({ status: 200, description: 'Activity recorded' })
   @ApiResponse({ status: 404, description: 'Unknown device token' })
-  async heartbeat(@Headers('x-device-token') deviceToken: string): Promise<{ success: true }> {
-    await this.devicesService.heartbeat(deviceToken);
+  async heartbeat(@CurrentDevice() device: AuthenticatedDevice): Promise<{ success: true }> {
+    await this.devicesService.heartbeat(device.deviceId);
     return { success: true };
   }
 }
