@@ -13,6 +13,20 @@ export interface CorsConfig {
   origins: string[];
 }
 
+export interface EncryptionConfig {
+  masterKey: string;
+}
+
+export interface LlmConfigSetting {
+  ollamaUrl: string;
+}
+
+export interface ClassificationConfig {
+  workerEnabled: boolean;
+  pollIntervalMs: number;
+  batchSize: number;
+}
+
 export interface AppConfig {
   nodeEnv: string;
   isProduction: boolean;
@@ -20,6 +34,9 @@ export interface AppConfig {
   database: DatabaseConfig;
   jwt: JwtConfig;
   cors: CorsConfig;
+  encryption: EncryptionConfig;
+  llm: LlmConfigSetting;
+  classification: ClassificationConfig;
 }
 
 /**
@@ -54,6 +71,22 @@ export default (): AppConfig => {
         .map((origin) => origin.trim())
         .filter(Boolean),
     },
+    encryption: {
+      // Base64 of 32 random bytes — `openssl rand -base64 32` (design doc §3.3).
+      // Required in production (see validation.ts); dev falls back to a derived
+      // key so local/e2e runs work without configuration.
+      masterKey: process.env.ENCRYPTION_MASTER_KEY ?? '',
+    },
+    llm: {
+      ollamaUrl: process.env.LLM_OLLAMA_URL ?? 'http://localhost:11434',
+    },
+    classification: {
+      workerEnabled: !['1', 'true', 'yes'].includes(
+        (process.env.CLASSIFICATION_WORKER_DISABLED ?? 'false').toLowerCase(),
+      ),
+      pollIntervalMs: parseInteger(process.env.CLASSIFICATION_POLL_MS, 30_000),
+      batchSize: parseInteger(process.env.CLASSIFICATION_BATCH_SIZE, 50),
+    },
   };
 };
 
@@ -63,4 +96,12 @@ function parsePort(value: string | undefined): number {
   }
   const port = Number.parseInt(value, 10);
   return Number.isInteger(port) && port >= 0 && port <= 65535 ? port : 3000;
+}
+
+function parseInteger(value: string | undefined, fallback: number): number {
+  if (!value) {
+    return fallback;
+  }
+  const parsed = Number.parseInt(value, 10);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }

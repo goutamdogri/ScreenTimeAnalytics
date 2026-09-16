@@ -54,6 +54,8 @@ describe('event builders', () => {
       source: 'extension',
       eventType: 'browse',
       app: 'browser',
+      url: 'https://example.com/docs',
+      windowTitle: 'Docs',
       metadata: { url: 'https://example.com/docs', title: 'Docs' },
     });
   });

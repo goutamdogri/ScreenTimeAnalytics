@@ -19,6 +19,7 @@ model User {
   updatedAt     DateTime       @updatedAt @map("updated_at")
   devices       Device[]
   refreshTokens RefreshToken[]
+  llmConfig     LlmConfig?
 
   @@map("users")
 }
@@ -78,6 +79,11 @@ model RawEvent {
   windowTitle String?  @map("window_title")
   /// Page URL from the browser extension (browse events).
   url         String?
+  /// Classified top-level category (design doc §3.1). `NULL` = queued for the
+  /// content layer (rule engine didn't match; the async worker tries the LLM).
+  category    String?
+  /// Long-form video genre (design doc §3.2.1), only for `long_form_video`.
+  subCategory String?  @map("sub_category")
   /// Free-form structured payload (e.g. media track/artist, idle state).
   metadata    Json?
   createdAt   DateTime @default(now()) @map("created_at")
@@ -85,5 +91,36 @@ model RawEvent {
 
   @@unique([deviceId, timestamp, source])
   @@index([deviceId, timestamp])
+  @@index([category])
   @@map("raw_events")
+}
+
+/// Per-user LLM provider settings for content classification (design doc §3.3).
+/// The API key is stored encrypted (AES-256-GCM via the backend's master key);
+/// it is never returned to any client.
+model LlmConfig {
+  userId          String    @id @map("user_id")
+  /// One of `openai` | `groq` | `gemini` | `ollama`.
+  provider        String
+  model           String
+  encryptedApiKey String?   @map("encrypted_api_key")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("llm_config")
+}
+
+/// Cache of content-layer (LLM) classifications keyed by URL (design doc §3.2:
+/// "results cached per URL so nothing is re-classified twice").
+model ClassificationCache {
+  id          String   @id @default(uuid())
+  url         String   @unique
+  category    String
+  subCategory String?  @map("sub_category")
+  /// How the entry was produced: `rule` | `llm`.
+  method      String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("classification_cache")
 }

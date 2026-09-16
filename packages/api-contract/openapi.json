@@ -15,7 +15,9 @@
                   "properties": {
                     "status": {
                       "type": "string",
-                      "enum": ["ok"]
+                      "enum": [
+                        "ok"
+                      ]
                     },
                     "version": {
                       "type": "string"
@@ -25,7 +27,9 @@
                     },
                     "database": {
                       "type": "string",
-                      "enum": ["up"]
+                      "enum": [
+                        "up"
+                      ]
                     }
                   }
                 }
@@ -34,7 +38,9 @@
           }
         },
         "summary": "Liveness + database connectivity probe",
-        "tags": ["health"]
+        "tags": [
+          "health"
+        ]
       }
     },
     "/auth/register": {
@@ -70,7 +76,9 @@
           }
         },
         "summary": "Create an account and receive an access/refresh token pair",
-        "tags": ["auth"]
+        "tags": [
+          "auth"
+        ]
       }
     },
     "/auth/login": {
@@ -103,7 +111,9 @@
           }
         },
         "summary": "Exchange email + password for an access/refresh token pair",
-        "tags": ["auth"]
+        "tags": [
+          "auth"
+        ]
       }
     },
     "/auth/refresh": {
@@ -136,7 +146,9 @@
           }
         },
         "summary": "Rotate an unexpired refresh token for a new token pair",
-        "tags": ["auth"]
+        "tags": [
+          "auth"
+        ]
       }
     },
     "/auth/logout": {
@@ -162,7 +174,9 @@
           }
         },
         "summary": "Revoke a refresh token so it can no longer be used",
-        "tags": ["auth"]
+        "tags": [
+          "auth"
+        ]
       }
     },
     "/auth/me": {
@@ -190,7 +204,9 @@
           }
         ],
         "summary": "Echo the authenticated user for token validation",
-        "tags": ["auth"]
+        "tags": [
+          "auth"
+        ]
       }
     },
     "/devices/register": {
@@ -231,7 +247,9 @@
           }
         ],
         "summary": "Register a new device and receive its opaque device token",
-        "tags": ["devices"]
+        "tags": [
+          "devices"
+        ]
       }
     },
     "/devices": {
@@ -259,7 +277,9 @@
           }
         ],
         "summary": "List the authenticated user’s devices",
-        "tags": ["devices"]
+        "tags": [
+          "devices"
+        ]
       }
     },
     "/devices/{id}": {
@@ -306,7 +326,9 @@
           }
         ],
         "summary": "Rename a device or change its platform",
-        "tags": ["devices"]
+        "tags": [
+          "devices"
+        ]
       },
       "delete": {
         "operationId": "DevicesController_remove",
@@ -334,7 +356,9 @@
           }
         ],
         "summary": "Unregister a device",
-        "tags": ["devices"]
+        "tags": [
+          "devices"
+        ]
       }
     },
     "/devices/heartbeat": {
@@ -355,7 +379,119 @@
           }
         ],
         "summary": "Report device activity (authenticated with the opaque device token)",
-        "tags": ["devices"]
+        "tags": [
+          "devices"
+        ]
+      }
+    },
+    "/llm/providers": {
+      "get": {
+        "operationId": "LlmController_providers",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProviderAvailabilityResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List available LLM providers (local Ollama auto-detected) with per-user configuration state",
+        "tags": [
+          "llm"
+        ]
+      }
+    },
+    "/llm/config": {
+      "get": {
+        "operationId": "LlmController_getConfig",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LlmConfigResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No LLM configuration yet"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the user’s LLM settings; the API key is never returned",
+        "tags": [
+          "llm"
+        ]
+      },
+      "put": {
+        "operationId": "LlmController_putConfig",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveLlmConfigDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LlmConfigResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Save LLM provider settings; the API key is stored encrypted at rest",
+        "tags": [
+          "llm"
+        ]
+      },
+      "delete": {
+        "operationId": "LlmController_clearConfig",
+        "parameters": [],
+        "responses": {
+          "204": {
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Clear LLM settings and revert to rule-only classification",
+        "tags": [
+          "llm"
+        ]
       }
     },
     "/events": {
@@ -384,7 +520,9 @@
           }
         },
         "summary": "Ingest a batch of raw events (authenticated with the opaque device token)",
-        "tags": ["events"]
+        "tags": [
+          "events"
+        ]
       }
     }
   },
@@ -420,7 +558,10 @@
             "maxLength": 128
           }
         },
-        "required": ["email", "password"]
+        "required": [
+          "email",
+          "password"
+        ]
       },
       "AuthUserDto": {
         "type": "object",
@@ -438,7 +579,11 @@
             "format": "date-time"
           }
         },
-        "required": ["id", "email", "createdAt"]
+        "required": [
+          "id",
+          "email",
+          "createdAt"
+        ]
       },
       "RefreshTokenPairDto": {
         "type": "object",
@@ -452,7 +597,10 @@
             "description": "Rotating JWT used to mint new access tokens"
           }
         },
-        "required": ["accessToken", "refreshToken"]
+        "required": [
+          "accessToken",
+          "refreshToken"
+        ]
       },
       "AuthResponseDto": {
         "type": "object",
@@ -464,7 +612,10 @@
             "$ref": "#/components/schemas/RefreshTokenPairDto"
           }
         },
-        "required": ["user", "tokens"]
+        "required": [
+          "user",
+          "tokens"
+        ]
       },
       "LoginDto": {
         "type": "object",
@@ -477,7 +628,10 @@
             "type": "string"
           }
         },
-        "required": ["email", "password"]
+        "required": [
+          "email",
+          "password"
+        ]
       },
       "RefreshTokenDto": {
         "type": "object",
@@ -487,7 +641,9 @@
             "description": "The refresh token to rotate (or revoke on logout)"
           }
         },
-        "required": ["refreshToken"]
+        "required": [
+          "refreshToken"
+        ]
       },
       "RegisterDeviceDto": {
         "type": "object",
@@ -499,11 +655,20 @@
           },
           "platform": {
             "type": "string",
-            "enum": ["linux-x11", "linux-wayland", "windows", "macos", "unknown"],
+            "enum": [
+              "linux-x11",
+              "linux-wayland",
+              "windows",
+              "macos",
+              "unknown"
+            ],
             "example": "linux-x11"
           }
         },
-        "required": ["name", "platform"]
+        "required": [
+          "name",
+          "platform"
+        ]
       },
       "DeviceDto": {
         "type": "object",
@@ -519,7 +684,13 @@
           },
           "platform": {
             "type": "string",
-            "enum": ["linux-x11", "linux-wayland", "windows", "macos", "unknown"]
+            "enum": [
+              "linux-x11",
+              "linux-wayland",
+              "windows",
+              "macos",
+              "unknown"
+            ]
           },
           "deviceToken": {
             "type": "string",
@@ -538,7 +709,13 @@
             "format": "date-time"
           }
         },
-        "required": ["id", "name", "platform", "createdAt", "updatedAt"]
+        "required": [
+          "id",
+          "name",
+          "platform",
+          "createdAt",
+          "updatedAt"
+        ]
       },
       "UpdateDeviceDto": {
         "type": "object",
@@ -550,9 +727,165 @@
           },
           "platform": {
             "type": "string",
-            "enum": ["linux-x11", "linux-wayland", "windows", "macos", "unknown"]
+            "enum": [
+              "linux-x11",
+              "linux-wayland",
+              "windows",
+              "macos",
+              "unknown"
+            ]
           }
         }
+      },
+      "LocalProviderAvailabilityDto": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "example": true
+          },
+          "models": {
+            "example": [
+              "llama3.1:8b"
+            ],
+            "description": "Models pulled on the local Ollama instance",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "available",
+          "models"
+        ]
+      },
+      "CloudProviderItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "enum": [
+              "openai",
+              "groq",
+              "gemini",
+              "ollama"
+            ]
+          },
+          "label": {
+            "type": "string",
+            "example": "OpenAI"
+          },
+          "configured": {
+            "type": "boolean",
+            "description": "Whether this provider has a stored key for the current user"
+          },
+          "models": {
+            "example": [
+              "gpt-4o-mini",
+              "gpt-4o"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "configured",
+          "models"
+        ]
+      },
+      "CloudProvidersDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CloudProviderItemDto"
+            }
+          }
+        },
+        "required": [
+          "items"
+        ]
+      },
+      "ProviderAvailabilityResponse": {
+        "type": "object",
+        "properties": {
+          "local": {
+            "$ref": "#/components/schemas/LocalProviderAvailabilityDto"
+          },
+          "cloud": {
+            "$ref": "#/components/schemas/CloudProvidersDto"
+          }
+        },
+        "required": [
+          "local",
+          "cloud"
+        ]
+      },
+      "LlmConfigResponse": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "openai",
+              "groq",
+              "gemini",
+              "ollama"
+            ]
+          },
+          "model": {
+            "type": "string",
+            "example": "gpt-4o-mini"
+          },
+          "hasApiKey": {
+            "type": "boolean",
+            "description": "True when an API key is stored (never returned)"
+          },
+          "updatedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "model",
+          "hasApiKey",
+          "updatedAt"
+        ]
+      },
+      "SaveLlmConfigDto": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string",
+            "enum": [
+              "openai",
+              "groq",
+              "gemini",
+              "ollama"
+            ],
+            "example": "openai"
+          },
+          "model": {
+            "type": "string",
+            "example": "gpt-4o-mini",
+            "maxLength": 200
+          },
+          "apiKey": {
+            "type": "string",
+            "description": "Provider API key. Omitted on update to keep the existing stored key.",
+            "minLength": 8
+          }
+        },
+        "required": [
+          "provider",
+          "model"
+        ]
       },
       "IngestEventDto": {
         "type": "object",
@@ -564,12 +897,21 @@
           },
           "source": {
             "type": "string",
-            "enum": ["x11", "mpris", "extension"],
+            "enum": [
+              "x11",
+              "mpris",
+              "extension"
+            ],
             "description": "Origin of the observation"
           },
           "eventType": {
             "type": "string",
-            "enum": ["focus", "idle", "media", "browse"],
+            "enum": [
+              "focus",
+              "idle",
+              "media",
+              "browse"
+            ],
             "description": "Kind of observation"
           },
           "app": {
@@ -593,7 +935,11 @@
             "description": "Free-form structured payload (e.g. media track metadata)"
           }
         },
-        "required": ["timestamp", "source", "eventType"]
+        "required": [
+          "timestamp",
+          "source",
+          "eventType"
+        ]
       },
       "IngestEventsDto": {
         "type": "object",
@@ -607,7 +953,9 @@
             }
           }
         },
-        "required": ["events"]
+        "required": [
+          "events"
+        ]
       }
     }
   }

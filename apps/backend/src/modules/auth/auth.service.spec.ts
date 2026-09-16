@@ -9,6 +9,9 @@ const FAKE_USER_ID = randomUUID();
 const FAKE_EMAIL = 'test@example.com';
 const PASSWORD = 'Str0ng!Passw0rd';
 
+// Avoids the strict "never" mock-param error from jest.fn().mockResolvedValue()
+const resolve = <T>(value: T) => jest.fn(() => Promise.resolve(value));
+
 type PrismaDelegate = Record<string, jest.Mock>;
 
 function buildAuthService(delegates: { user: PrismaDelegate; refreshToken: PrismaDelegate }) {
@@ -43,25 +46,23 @@ describe('AuthService', () => {
     it('creates a new user and returns tokens', async () => {
       const { service } = buildAuthService({
         user: {
-          findUnique: jest.fn().mockResolvedValue(null),
-          create: jest
-            .fn()
-            .mockImplementation(({ data }: { data: any }) =>
-              Promise.resolve({
-                ...data,
-                id: FAKE_USER_ID,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-              }),
-            ),
+          findUnique: resolve(null),
+          create: jest.fn().mockImplementation((input: any) => {
+            const { data } = input;
+            return Promise.resolve({
+              ...data,
+              id: FAKE_USER_ID,
+              createdAt: new Date(),
+              updatedAt: new Date(),
+            });
+          }),
         },
         refreshToken: {
-          findUnique: jest.fn().mockResolvedValue(null),
-          create: jest
-            .fn()
-            .mockImplementation(({ data }: { data: any }) =>
-              Promise.resolve({ ...data, id: randomUUID(), createdAt: new Date() }),
-            ),
+          findUnique: resolve(null),
+          create: jest.fn().mockImplementation((input: any) => {
+            const { data } = input;
+            return Promise.resolve({ ...data, id: randomUUID(), createdAt: new Date() });
+          }),
           updateMany: jest.fn(),
           update: jest.fn(),
         },
@@ -77,7 +78,7 @@ describe('AuthService', () => {
     it('throws ConflictException for duplicate email', async () => {
       const { service } = buildAuthService({
         user: {
-          findUnique: jest.fn().mockResolvedValue({ id: randomUUID() }),
+          findUnique: resolve({ id: randomUUID() }),
           create: jest.fn(),
         },
         refreshToken: {
@@ -98,9 +99,7 @@ describe('AuthService', () => {
       const passwordHash = await argon2.hash(PASSWORD);
       const { service } = buildAuthService({
         user: {
-          findUnique: jest
-            .fn()
-            .mockResolvedValue({ id: FAKE_USER_ID, email: FAKE_EMAIL, passwordHash }),
+          findUnique: resolve({ id: FAKE_USER_ID, email: FAKE_EMAIL, passwordHash }),
         },
         refreshToken: {
           create: jest.fn(),
@@ -117,9 +116,7 @@ describe('AuthService', () => {
       const passwordHash = await argon2.hash(PASSWORD);
       const { service } = buildAuthService({
         user: {
-          findUnique: jest
-            .fn()
-            .mockResolvedValue({ id: FAKE_USER_ID, email: FAKE_EMAIL, passwordHash }),
+          findUnique: resolve({ id: FAKE_USER_ID, email: FAKE_EMAIL, passwordHash }),
         },
         refreshToken: {
           create: jest.fn(),
@@ -134,7 +131,7 @@ describe('AuthService', () => {
 
     it('returns null for unknown email', async () => {
       const { service } = buildAuthService({
-        user: { findUnique: jest.fn().mockResolvedValue(null) },
+        user: { findUnique: resolve(null) },
         refreshToken: {
           create: jest.fn(),
           updateMany: jest.fn(),
@@ -153,18 +150,27 @@ describe('AuthService', () => {
 
     it('rotates a valid refresh token and revokes the original', async () => {
       const updateMany = jest
-        .fn()
+        .fn<Promise<{ count: number }>, []>()
         .mockResolvedValueOnce({ count: 1 }) // first rotation succeeds
         .mockResolvedValueOnce({ count: 0 }); // reuse: already revoked
       const { service } = buildAuthService({
         user: {
           findUniqueOrThrow: jest
-            .fn()
+            .fn<Promise<{ id: string; email: string; createdAt: Date }>, []>()
             .mockResolvedValue({ id: FAKE_USER_ID, email: FAKE_EMAIL, createdAt: new Date() }),
         },
         refreshToken: {
           findUnique: jest
-            .fn()
+            .fn<
+              Promise<{
+                id: string;
+                userId: string;
+                jti: string;
+                expiresAt: Date;
+                revokedAt: null;
+              } | null>,
+              []
+            >()
             .mockResolvedValueOnce({
               id: randomUUID(),
               userId: FAKE_USER_ID,
@@ -180,11 +186,10 @@ describe('AuthService', () => {
               revokedAt: null,
             })
             .mockResolvedValueOnce(null), // after revocation, reuse → null
-          create: jest
-            .fn()
-            .mockImplementation(({ data }: { data: any }) =>
-              Promise.resolve({ ...data, id: randomUUID(), createdAt: new Date() }),
-            ),
+          create: jest.fn().mockImplementation((input: any) => {
+            const { data } = input;
+            return Promise.resolve({ ...data, id: randomUUID(), createdAt: new Date() });
+          }),
           updateMany,
           update: jest.fn(),
         },
@@ -207,7 +212,7 @@ describe('AuthService', () => {
 
   describe('logout', () => {
     it('revokes the refresh token', async () => {
-      const updateMany = jest.fn().mockResolvedValue({ count: 1 });
+      const updateMany = jest.fn(() => Promise.resolve({ count: 1 }));
       const { service } = buildAuthService({
         user: { findUnique: jest.fn(), create: jest.fn() },
         refreshToken: { create: jest.fn(), updateMany, update: jest.fn(), findUnique: jest.fn() },

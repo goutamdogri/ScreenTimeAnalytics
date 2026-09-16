@@ -4,7 +4,7 @@
     "module": "commonjs",
     "target": "ES2022",
     "outDir": "./dist",
-    "baseUrl": "./"
+    "types": ["node", "express", "jest", "passport", "passport-jwt", "passport-local", "supertest"]
   },
   "include": ["src/**/*.ts", "test/**/*.ts"],
   "exclude": ["node_modules", "dist"]

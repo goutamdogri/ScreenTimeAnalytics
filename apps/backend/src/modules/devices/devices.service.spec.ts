@@ -4,12 +4,15 @@ import { DevicesService } from './devices.service';
 describe('DevicesService', () => {
   const FAKE_USER_ID = '00000000-0000-0000-0000-000000000001';
 
+  // Helper: avoids the strict "never" mock-param error from jest.fn().mockResolvedValue()
+  const resolve = <T>(value: T) => jest.fn(() => Promise.resolve(value));
+
   describe('register', () => {
     it('creates a device with generated deviceToken', async () => {
       const prismaMock = {
         device: {
-          findUnique: jest.fn().mockResolvedValue(null),
-          create: jest.fn().mockImplementation(({ data }: { data: any }) =>
+          findUnique: resolve(null),
+          create: jest.fn().mockImplementation(({ data }: any) =>
             Promise.resolve({
               ...data,
               id: 'device-1',
@@ -40,7 +43,7 @@ describe('DevicesService', () => {
       const createMock = jest.fn();
       const prismaMock = {
         device: {
-          findUnique: jest.fn().mockResolvedValue(existingDevice),
+          findUnique: resolve(existingDevice),
           create: createMock,
         },
       };
@@ -55,7 +58,7 @@ describe('DevicesService', () => {
     it('returns public fields only (no deviceToken)', async () => {
       const prismaMock = {
         device: {
-          findMany: jest.fn().mockResolvedValue([
+          findMany: resolve([
             {
               id: '1',
               name: 'PC',
@@ -78,7 +81,7 @@ describe('DevicesService', () => {
     it('throws NotFoundException for non-owned device', async () => {
       const prismaMock = {
         device: {
-          findFirst: jest.fn().mockResolvedValue(null),
+          findFirst: jest.fn(() => Promise.resolve(null)),
         },
       };
       const service = new DevicesService(prismaMock as any);
@@ -92,7 +95,7 @@ describe('DevicesService', () => {
     it('throws NotFoundException for non-owned device', async () => {
       const prismaMock = {
         device: {
-          findFirst: jest.fn().mockResolvedValue(null),
+          findFirst: jest.fn(() => Promise.resolve(null)),
         },
       };
       const service = new DevicesService(prismaMock as any);
@@ -102,8 +105,8 @@ describe('DevicesService', () => {
     it('deletes an owned device', async () => {
       const prismaMock = {
         device: {
-          findFirst: jest.fn().mockResolvedValue({ id: '1', userId: FAKE_USER_ID }),
-          delete: jest.fn().mockResolvedValue(undefined),
+          findFirst: jest.fn(() => Promise.resolve({ id: '1', userId: FAKE_USER_ID })),
+          delete: jest.fn(() => Promise.resolve(undefined)),
         },
       };
       const service = new DevicesService(prismaMock as any);
@@ -113,7 +116,9 @@ describe('DevicesService', () => {
 
   describe('heartbeat', () => {
     it('records lastSeenAt for a resolved deviceId', async () => {
-      const updateMock = jest.fn().mockResolvedValue({ id: '1', lastSeenAt: new Date() });
+      const updateMock = jest
+        .fn<Promise<{ id: string; lastSeenAt: Date }>, unknown[]>()
+        .mockResolvedValue({ id: '1', lastSeenAt: new Date() });
       const prismaMock = {
         device: { update: updateMock },
       };

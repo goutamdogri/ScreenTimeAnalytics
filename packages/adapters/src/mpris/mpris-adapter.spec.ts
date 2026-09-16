@@ -15,11 +15,15 @@ function fakeBus(values: Record<string, unknown>[]): MprisBus {
 }
 
 describe('MprisAdapter', () => {
-  beforeEach(() => jest.useFakeTimers());
-  afterEach(() => jest.useRealTimers());
+  beforeEach(() => {
+    jest.useFakeTimers();
+  });
+  afterEach(() => {
+    jest.useRealTimers();
+  });
 
   it('emits media events when metadata appears for the first time', async () => {
-    const mediaFn = jest.fn();
+    const mediaFn = jest.fn<void, [info: NowPlayingInfo | null]>();
     const bus = fakeBus([
       { 'xesam:title': { value: 'Blinding Lights' }, 'xesam:artist': { value: ['The Weeknd'] } },
     ]);
@@ -29,13 +33,13 @@ describe('MprisAdapter', () => {
     await jest.advanceTimersByTimeAsync(0);
 
     expect(mediaFn).toHaveBeenCalledTimes(1);
-    const payload = mediaFn.mock.calls[0][0] as NowPlayingInfo;
+    const payload = mediaFn.mock.calls[0]![0] as NowPlayingInfo;
     expect(payload).toMatchObject({ trackTitle: 'Blinding Lights', artist: 'The Weeknd' });
     adapter.dispose();
   });
 
   it('does not re-emit when nothing changed', async () => {
-    const mediaFn = jest.fn();
+    const mediaFn = jest.fn<void, [info: NowPlayingInfo | null]>();
     const same = { 'xesam:title': { value: 'Static' } };
     const bus = fakeBus([same, same]);
     const adapter = new MprisAdapter({ bus, pollIntervalMs: 1000 });
@@ -49,13 +53,15 @@ describe('MprisAdapter', () => {
   });
 
   it('emits null when the last player disappears', async () => {
-    const mediaFn = jest.fn();
+    const mediaFn = jest.fn<void, [info: NowPlayingInfo | null]>();
     const bus = {
       listPlayerNames: jest
-        .fn()
+        .fn<Promise<string[]>, []>()
         .mockResolvedValueOnce(['org.mpris.MediaPlayer2.spotify'])
         .mockResolvedValueOnce([]),
-      getPlayerMetadata: jest.fn().mockResolvedValue({ 'xesam:title': { value: 'Goodbye' } }),
+      getPlayerMetadata: jest
+        .fn<Promise<Record<string, { value: string }>>, [name: string]>()
+        .mockResolvedValue({ 'xesam:title': { value: 'Goodbye' } }),
       dispose: jest.fn(),
     } as unknown as MprisBus;
     const adapter = new MprisAdapter({ bus, pollIntervalMs: 1000 });
@@ -79,7 +85,7 @@ describe('MprisAdapter', () => {
 
 describe('MprisAdapter contract with no players', () => {
   it('never emits when there are no players', async () => {
-    const mediaFn = jest.fn();
+    const mediaFn = jest.fn<void, [info: NowPlayingInfo | null]>();
     const adapter = new MprisAdapter({ bus: fakeBus([]), pollIntervalMs: 1000 });
     adapter.onMediaChanged(mediaFn);
     adapter.start();
