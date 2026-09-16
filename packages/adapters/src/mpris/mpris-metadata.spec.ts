@@ -1,3 +1,4 @@
+import { describe, expect, it } from '@jest/globals';
 import { mapMprisMetadata } from './mpris-metadata';
 
 describe('mapMprisMetadata', () => {

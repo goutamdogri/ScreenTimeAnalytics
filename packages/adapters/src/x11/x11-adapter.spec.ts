@@ -1,3 +1,4 @@
+import { afterEach, beforeEach, describe, expect, it, jest } from '@jest/globals';
 import { CommandRunner, CommandOutput } from '../command-runner';
 import { runAdapterContractTests } from '../testing/contract';
 import { X11Adapter } from './x11-adapter';
@@ -87,7 +88,10 @@ describe('X11Adapter', () => {
     const adapter = new X11Adapter({
       commandRunner: runner,
       idleProbe: {
-        getIdleTimeMs: jest.fn().mockResolvedValueOnce(1_000).mockResolvedValueOnce(70_000),
+        getIdleTimeMs: jest
+          .fn<() => Promise<number>>()
+          .mockResolvedValueOnce(1_000)
+          .mockResolvedValueOnce(70_000),
         dispose: jest.fn(),
       },
       idleThresholdMs: 60_000,
