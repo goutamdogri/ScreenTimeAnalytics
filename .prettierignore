@@ -3,6 +3,7 @@ dist
 coverage
 **/generated/prisma
 **/src/generated
+packages/api-contract/openapi.json
 pnpm-lock.yaml
 *.snap
 .env*
