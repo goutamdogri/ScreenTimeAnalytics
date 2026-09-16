@@ -11,6 +11,7 @@ import { EventsModule } from './modules/events/events.module';
 import { CryptoModule } from './modules/crypto/crypto.module';
 import { LlmModule } from './modules/llm/llm.module';
 import { ClassificationModule } from './modules/classification/classification.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { PrismaModule } from './modules/prisma/prisma.module';
 
 @Module({
@@ -29,6 +30,7 @@ import { PrismaModule } from './modules/prisma/prisma.module';
     ClassificationModule,
     LlmModule,
     EventsModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService, ConfigService],
