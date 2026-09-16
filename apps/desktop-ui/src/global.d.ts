@@ -5,9 +5,9 @@ interface ScreenTimeTokens {
 
 interface ScreenTimeBridge {
   apiBaseUrl: string;
-  storeTokens(tokens: ScreenTimeTokens): void;
-  getTokens(): ScreenTimeTokens | null;
-  clearTokens(): void;
+  storeTokens(tokens: ScreenTimeTokens): Promise<boolean>;
+  getTokens(): Promise<ScreenTimeTokens | null>;
+  clearTokens(): Promise<boolean>;
 }
 
 declare global {

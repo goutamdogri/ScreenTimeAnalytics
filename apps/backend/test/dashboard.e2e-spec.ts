@@ -98,6 +98,31 @@ describe('dashboard (e2e)', () => {
     expect(res.body.activeDevices).toBe(1);
   });
 
+  it('GET /dashboard/summary with non-UTC tz → buckets events into the correct local day', async () => {
+    // Regression: the day boundary must be local midnight in the given tz, not
+    // shifted by the tz offset. The seeded events land within the last few
+    // minutes, so compute the Asia/Kolkata date they fall on deterministically.
+    const kolkataDate = new Date(new Date(focusBatch[0]!.timestamp).getTime() + 5.5 * 3600 * 1000)
+      .toISOString()
+      .slice(0, 10);
+
+    const res = await request(app.getHttpServer())
+      .get(`/dashboard/summary?date=${kolkataDate}&tz=Asia/Kolkata`)
+      .set('Authorization', `Bearer ${accessToken}`)
+      .expect(200);
+
+    expect(res.body.date).toBe(kolkataDate);
+    expect(res.body.totalMinutes).toBeGreaterThanOrEqual(3);
+    expect(res.body.sessionCount).toBe(1);
+    expect(res.body.byCategory).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ category: 'deep_work' }),
+        expect.objectContaining({ category: 'communication' }),
+        expect.objectContaining({ category: 'music_audio' }),
+      ]),
+    );
+  });
+
   it('GET /dashboard/trends?range=week → includes today with deep_work minutes', async () => {
     const res = await request(app.getHttpServer())
       .get('/dashboard/trends?range=week&tz=UTC')

@@ -1,5 +1,6 @@
-import { app, BrowserWindow, shell } from 'electron';
+import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import { join } from 'node:path';
+import { tokenStore } from './storage';
 
 function resolveRendererUrl(win: BrowserWindow): string {
   const devServerUrl = process.env.VITE_DEV_SERVER_URL;
@@ -38,6 +39,16 @@ function createWindow(): BrowserWindow {
 }
 
 app.whenReady().then(() => {
+  const registerTokenHandlers = () => {
+    ipcMain.handle('screen-time:tokens:get', () => tokenStore.getTokens());
+    ipcMain.handle('screen-time:tokens:set', (_event, tokens) => {
+      tokenStore.setTokens(tokens);
+      return true;
+    });
+    ipcMain.handle('screen-time:tokens:clear', () => tokenStore.clear());
+  };
+  registerTokenHandlers();
+
   createWindow();
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();

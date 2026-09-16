@@ -59,8 +59,8 @@ export class DashboardService {
 
   async getSummary(userId: string, date: string, tz: string) {
     const [bounds] = await this.prisma.$queryRaw<[{ start: Date; end: Date }]>`
-      SELECT (${date}::date AT TIME ZONE ${tz})::timestamptz AS start,
-             (${date}::date AT TIME ZONE ${tz})::timestamptz + INTERVAL '1 day' AS end
+      SELECT (${date}::timestamp AT TIME ZONE ${tz})::timestamptz AS start,
+             (${date}::timestamp AT TIME ZONE ${tz})::timestamptz + INTERVAL '1 day' AS end
     `;
     const dayStart = bounds.start;
     const dayEnd = bounds.end;

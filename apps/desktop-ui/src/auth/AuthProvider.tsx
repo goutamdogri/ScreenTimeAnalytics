@@ -30,8 +30,8 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function readStoredTokens(): TokenPair | null {
-  const raw = window.screenTime?.getTokens();
+async function readStoredTokens(): Promise<TokenPair | null> {
+  const raw = window.screenTime ? await window.screenTime.getTokens() : null;
   if (raw) return raw;
   const json = localStorage.getItem('screen-time-tokens');
   return json ? (JSON.parse(json) as TokenPair) : null;
@@ -39,7 +39,7 @@ function readStoredTokens(): TokenPair | null {
 
 function storeTokens(tokens: TokenPair): void {
   if (window.screenTime) {
-    window.screenTime.storeTokens(tokens);
+    void window.screenTime.storeTokens(tokens);
   } else {
     localStorage.setItem('screen-time-tokens', JSON.stringify(tokens));
   }
@@ -77,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     void (async () => {
-      const tokens = readStoredTokens();
+      const tokens = await readStoredTokens();
       if (!tokens) {
         setStatus('unauthenticated');
         return;
@@ -132,7 +132,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const logout = useCallback(async () => {
-    const stored = readStoredTokens();
+    const stored = await readStoredTokens();
     if (stored) {
       await client
         .POST('/auth/logout', { body: { refreshToken: stored.refreshToken } })
