@@ -16,6 +16,14 @@ describe('categorizeEvent', () => {
     });
   });
 
+  it.each(['wayland', 'windows'] as const)(
+    'maps %s idle events to idle_afk (Phase 6 sources)',
+    (source) => {
+      const result = categorizeEvent({ source, eventType: 'idle', app: 'system' });
+      expect(result.category).toBe(Category.IDLE_AFK);
+    },
+  );
+
   it('maps any MPRIS media event to music_audio', () => {
     const result = categorizeEvent({ source: 'mpris', eventType: 'media', app: 'spotify' });
     expect(result).toEqual({
@@ -24,6 +32,11 @@ describe('categorizeEvent', () => {
       basis: 'rule',
       confidence: 1,
     });
+  });
+
+  it('maps Windows SMTC media events to music_audio (Phase 6 source)', () => {
+    const result = categorizeEvent({ source: 'smtc', eventType: 'media', app: 'Spotify.exe' });
+    expect(result.category).toBe(Category.MUSIC_AUDIO);
   });
 
   it('classifies a known development host as deep_work', () => {

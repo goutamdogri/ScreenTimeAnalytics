@@ -82,7 +82,11 @@ async function runAgent(logger: AgentLogger): Promise<number> {
   const app = new AgentApp({ config, logger });
   try {
     const { deviceId } = await app.start();
-    logger.info('agent_started', { deviceId, capture: 'x11+mpris', api: config.apiBaseUrl });
+    logger.info('agent_started', {
+      deviceId,
+      capture: app.captureLabel,
+      api: config.apiBaseUrl,
+    });
   } catch (err) {
     logger.error('startup_failed', { message: err instanceof Error ? err.message : String(err) });
     return 1;

@@ -1216,7 +1216,10 @@
             "enum": [
               "x11",
               "mpris",
-              "extension"
+              "extension",
+              "wayland",
+              "windows",
+              "smtc"
             ],
             "description": "Origin of the observation"
           },

@@ -1,0 +1,8 @@
+{
+  "uuid": "screentime-window-probe@screen-time-analytics",
+  "name": "Screen Time Window Probe",
+  "description": "Exposes the active window (title + app id) over the session D-Bus so the Screen Time desktop agent can track focus on Wayland, where cross-app window queries are blocked by design.",
+  "shell-version": ["45", "46", "47", "48", "49"],
+  "version-name": "0.1.0",
+  "url": "https://github.com/goutamdogri/ScreenTimeAnalytics"
+}

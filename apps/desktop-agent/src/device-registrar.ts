@@ -21,6 +21,8 @@ export class DeviceRegistrar {
     private readonly api: ApiClient,
     private readonly store: AgentStore,
     private readonly config: AgentConfig,
+    /** Effective platform (`auto` is resolved by the adapter factory first). */
+    private readonly platform: string = config.platform,
   ) {}
 
   /** Returns the device token, registering if we don't have one yet. */
@@ -32,7 +34,7 @@ export class DeviceRegistrar {
 
     const body: RegisterDeviceBody = {
       name: this.config.deviceName,
-      platform: this.config.platform as RegisterDeviceBody['platform'],
+      platform: this.platform as RegisterDeviceBody['platform'],
     };
     const res = await this.api.request<RegisterDeviceResponse>('/devices/register', {
       method: 'POST',

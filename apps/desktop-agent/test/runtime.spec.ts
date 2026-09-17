@@ -151,7 +151,13 @@ describe('AgentApp', () => {
       store: store as never,
       api: api as never,
       buffer,
-      adapters: async () => ({ x11: x11 as never, mpris: mpris as never }),
+      adapters: async () => ({
+        active: x11 as never,
+        activeSource: 'x11',
+        media: mpris as never,
+        mediaSource: 'mpris',
+        platform: 'linux-x11',
+      }),
       now: () => NOW,
     });
 
@@ -198,7 +204,13 @@ describe('AgentApp', () => {
       config: makeConfig(),
       logger: SILENT_LOGGER,
       store: new InMemoryStore() as never,
-      adapters: async () => ({ x11: new FakeX11() as never, mpris: null }),
+      adapters: async () => ({
+        active: new FakeX11() as never,
+        activeSource: 'x11',
+        media: null,
+        mediaSource: null,
+        platform: 'linux-x11',
+      }),
     });
     await expect(app.start()).rejects.toThrow(/login/);
   });

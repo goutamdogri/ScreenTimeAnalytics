@@ -2,6 +2,16 @@ import { EventSource, EventType } from '../events';
 import { Category, LongFormVideoSubCategory } from './categories';
 import { CategoryRule, DEFAULT_CATEGORY_RULES } from './rules';
 
+/** Sources whose focus/idle state should be treated as AFK state changes. */
+function isIdleSource(source: EventSource): boolean {
+  return source === 'x11' || source === 'wayland' || source === 'windows';
+}
+
+/** Sources whose now-playing media should be categorized as Music/Audio. */
+function isMediaSource(source: EventSource): boolean {
+  return source === 'mpris' || source === 'smtc';
+}
+
 /**
  * Rule-based content categorization (design doc §3.2 step 1).
  *
@@ -117,10 +127,10 @@ function findAppRule(app: string): CategoryRule | undefined {
 export function categorizeEvent(input: CategorizeEventInput): CategorizationResult {
   const { source, eventType, app, url } = input;
 
-  if (source === 'x11' && eventType === 'idle') {
+  if (isIdleSource(source) && eventType === 'idle') {
     return ruleResult(Category.IDLE_AFK);
   }
-  if (source === 'mpris' && eventType === 'media') {
+  if (isMediaSource(source) && eventType === 'media') {
     return ruleResult(Category.MUSIC_AUDIO);
   }
 

@@ -1,4 +1,4 @@
-import type { RawEventPayload } from '@screen-time/core';
+import type { EventSource, RawEventPayload } from '@screen-time/core';
 import type { ActiveWindowInfo, NowPlayingInfo } from '@screen-time/adapters';
 
 /**
@@ -11,32 +11,48 @@ import type { ActiveWindowInfo, NowPlayingInfo } from '@screen-time/adapters';
  * The device is identified by the backend from the `x-device-token` header at
  * ingest time; the `(deviceId, timestamp, source)` unique triple is what
  * makes the backend's ingest idempotent.
+ *
+ * `source` identifies the OS path an observation came from (`x11`, `wayland`,
+ * `windows`, `mpris`, `smtc`); the runtime threads the active adapter's own
+ * source label through.
  */
-export function focusEvent(timestamp: string, window: ActiveWindowInfo): RawEventPayload {
+export function focusEvent(
+  timestamp: string,
+  window: ActiveWindowInfo,
+  source: EventSource = 'x11',
+): RawEventPayload {
   return {
     timestamp,
-    source: 'x11',
+    source,
     eventType: 'focus',
     app: window.processName,
     windowTitle: window.title,
   };
 }
 
-export function idleEvent(timestamp: string, idle: boolean): RawEventPayload {
+export function idleEvent(
+  timestamp: string,
+  idle: boolean,
+  source: EventSource = 'x11',
+): RawEventPayload {
   return {
     timestamp,
-    source: 'x11',
+    source,
     eventType: 'idle',
     app: 'system',
     metadata: { idle },
   };
 }
 
-export function mediaEvent(timestamp: string, np: NowPlayingInfo | null): RawEventPayload {
+export function mediaEvent(
+  timestamp: string,
+  np: NowPlayingInfo | null,
+  source: EventSource = 'mpris',
+): RawEventPayload {
   if (np === null) {
     return {
       timestamp,
-      source: 'mpris',
+      source,
       eventType: 'media',
       app: 'system',
       metadata: { state: 'stopped' },
@@ -44,7 +60,7 @@ export function mediaEvent(timestamp: string, np: NowPlayingInfo | null): RawEve
   }
   return {
     timestamp,
-    source: 'mpris',
+    source,
     eventType: 'media',
     app: np.sourceApp,
     windowTitle: np.trackTitle,

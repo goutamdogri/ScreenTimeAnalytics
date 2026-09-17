@@ -37,6 +37,22 @@ export function runAdapterContractTests(name: string, create: AdapterFactory): v
       expect(() => adapter.onMediaChanged(cb)).not.toThrow();
     });
 
+    it('start() is idempotent and stop() does not throw', () => {
+      adapter.start();
+      adapter.start();
+      expect(() => {
+        adapter.stop();
+        adapter.stop();
+      }).not.toThrow();
+    });
+
+    it('no signal method throws after dispose()', () => {
+      adapter.dispose();
+      expect(() => adapter.getActiveWindow()).not.toThrow();
+      expect(() => adapter.onIdleChanged(jest.fn())).not.toThrow();
+      expect(() => adapter.onMediaChanged(jest.fn())).not.toThrow();
+    });
+
     it('dispose() is idempotent', () => {
       expect(() => {
         adapter.dispose();

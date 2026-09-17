@@ -7,6 +7,8 @@
 
 export { AgentApp } from './runtime';
 export type { AgentAppOptions } from './runtime';
+export { createAdapters, resolvePlatform } from './adapter-factory';
+export type { AdapterSet, AdapterSource, MediaSource, PlatformId } from './adapter-factory';
 export { EventBuffer } from './buffer';
 export { SyncEngine } from './sync';
 export type { IngestResponse } from './sync';
