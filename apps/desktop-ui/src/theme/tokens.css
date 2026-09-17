@@ -26,6 +26,7 @@
 
   --sidebar-w: 232px;
   --topbar-h: 56px;
+  --titlebar-h: 38px;
   --gutter: 32px;
 
   --text-xs: 11px;
@@ -188,6 +189,93 @@ h4 {
 }
 *::-webkit-scrollbar-track {
   background: transparent;
+}
+
+/* ---------- window frame / title bar ---------- */
+
+.window-shell {
+  display: grid;
+  grid-template-rows: var(--titlebar-h) 1fr;
+  height: 100%;
+}
+
+.window-body {
+  min-height: 0;
+}
+
+.window-body > .app-shell {
+  height: 100%;
+}
+
+.titlebar {
+  -webkit-app-region: drag;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-2);
+  border-bottom: 1px solid var(--line);
+}
+
+.titlebar-left {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 var(--space-3);
+  height: var(--titlebar-h);
+}
+
+.titlebar-mark {
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  display: grid;
+  place-items: center;
+}
+
+.titlebar-mark svg {
+  width: 10px;
+  height: 10px;
+}
+
+.titlebar-name {
+  font-size: 12.5px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.titlebar-controls {
+  -webkit-app-region: no-drag;
+  display: flex;
+  align-items: stretch;
+  height: var(--titlebar-h);
+}
+
+.window-chrome {
+  width: 44px;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--ink-2);
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  cursor: default;
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
+}
+
+.window-chrome:hover {
+  background: var(--hover);
+  color: var(--ink);
+}
+
+.window-chrome-close:hover {
+  background: #dc2626;
+  color: #ffffff;
 }
 
 /* ---------- app shell ---------- */

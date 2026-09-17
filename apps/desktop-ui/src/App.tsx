@@ -1,5 +1,6 @@
 import { AuthProvider, useAuth } from './auth/AuthProvider';
 import { SignalGlyph } from './components/primitives';
+import { TitleBar } from './components/TitleBar';
 import { Shell, type ViewKey } from './shell/Shell';
 import { Overview } from './routes/Overview';
 import { Trends } from './routes/Trends';
@@ -109,7 +110,12 @@ function AppShell() {
 export function App() {
   return (
     <AuthProvider>
-      <AppShell />
+      <div className="window-shell">
+        <TitleBar />
+        <div className="window-body">
+          <AppShell />
+        </div>
+      </div>
     </AuthProvider>
   );
 }
