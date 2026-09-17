@@ -5,6 +5,7 @@ import {
   TrendsIcon,
   SessionsIcon,
   CategoriesIcon,
+  ProgressIcon,
   DevicesIcon,
   SettingsIcon,
   SunIcon,
@@ -17,6 +18,7 @@ const NAV_ITEMS = [
   { key: 'trends', label: 'Trends' },
   { key: 'sessions', label: 'Sessions' },
   { key: 'categories', label: 'Categories' },
+  { key: 'progress', label: 'Progress' },
   { key: 'devices', label: 'Devices' },
   { key: 'settings', label: 'Settings' },
 ] as const;
@@ -28,6 +30,7 @@ const NAV_ICONS: Record<ViewKey, React.ComponentType> = {
   trends: TrendsIcon,
   sessions: SessionsIcon,
   categories: CategoriesIcon,
+  progress: ProgressIcon,
   devices: DevicesIcon,
   settings: SettingsIcon,
 };

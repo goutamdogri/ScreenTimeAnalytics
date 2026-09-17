@@ -14,6 +14,7 @@ process.env.JWT_ACCESS_SECRET ??= 'generate-openapi-placeholder-access';
 process.env.JWT_REFRESH_SECRET ??= 'generate-openapi-placeholder-refresh';
 // The classification worker must not run while we only introspect decorators.
 process.env.CLASSIFICATION_WORKER_DISABLED ??= '1';
+process.env.SESSION_FINALIZER_DISABLED ??= '1';
 
 async function generate(): Promise<void> {
   const { AppModule } = await import('../app.module');

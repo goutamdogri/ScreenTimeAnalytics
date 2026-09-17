@@ -5,17 +5,21 @@ import { Overview } from './routes/Overview';
 import { Trends } from './routes/Trends';
 import { Sessions } from './routes/Sessions';
 import { Categories } from './routes/Categories';
+import { Progress } from './routes/Progress';
 import { Devices } from './routes/Devices';
 import { Settings } from './routes/Settings';
 import { useState, type FormEvent, type ComponentType } from 'react';
 
-const VIEWS: Record<ViewKey, ComponentType> = {
-  overview: Overview,
-  trends: Trends,
-  sessions: Sessions,
-  categories: Categories,
-  devices: Devices,
-  settings: Settings,
+type ViewComponent = ComponentType<{ onNavigate: (key: ViewKey) => void }>;
+
+const VIEWS: Record<ViewKey, ViewComponent> = {
+  overview: (props) => <Overview {...props} />,
+  trends: () => <Trends />,
+  sessions: () => <Sessions />,
+  categories: () => <Categories />,
+  progress: () => <Progress />,
+  devices: () => <Devices />,
+  settings: () => <Settings />,
 };
 
 function Login() {
@@ -97,7 +101,7 @@ function AppShell() {
   const ViewComponent = VIEWS[view];
   return (
     <Shell view={view} onNavigate={setView}>
-      <ViewComponent />
+      <ViewComponent onNavigate={setView} />
     </Shell>
   );
 }

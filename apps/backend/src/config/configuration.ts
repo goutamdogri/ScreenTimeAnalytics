@@ -27,6 +27,17 @@ export interface ClassificationConfig {
   batchSize: number;
 }
 
+export interface SessionsConfig {
+  finalizerEnabled: boolean;
+  pollIntervalMs: number;
+  /**
+   * How old (ms) a window's last event must be before the finalizer closes the
+   * session: 2× the session gap, so a buffered/offline agent burst reconnecting
+   * late can never split one session into two.
+   */
+  settleMs: number;
+}
+
 export interface AppConfig {
   nodeEnv: string;
   isProduction: boolean;
@@ -37,6 +48,7 @@ export interface AppConfig {
   encryption: EncryptionConfig;
   llm: LlmConfigSetting;
   classification: ClassificationConfig;
+  sessions: SessionsConfig;
 }
 
 /**
@@ -86,6 +98,13 @@ export default (): AppConfig => {
       ),
       pollIntervalMs: parseInteger(process.env.CLASSIFICATION_POLL_MS, 30_000),
       batchSize: parseInteger(process.env.CLASSIFICATION_BATCH_SIZE, 50),
+    },
+    sessions: {
+      finalizerEnabled: !['1', 'true', 'yes'].includes(
+        (process.env.SESSION_FINALIZER_DISABLED ?? 'false').toLowerCase(),
+      ),
+      pollIntervalMs: parseInteger(process.env.SESSION_FINALIZER_POLL_MS, 30_000),
+      settleMs: parseInteger(process.env.SESSION_FINALIZER_SETTLE_MS, 600_000),
     },
   };
 };

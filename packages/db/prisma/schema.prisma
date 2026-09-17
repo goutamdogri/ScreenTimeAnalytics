@@ -20,6 +20,10 @@ model User {
   devices       Device[]
   refreshTokens RefreshToken[]
   llmConfig     LlmConfig?
+  userState     UserState?
+  xpLogs        XpLog[]
+  quests        Quest[]
+  achievements  Achievement[]
 
   @@map("users")
 }
@@ -36,6 +40,7 @@ model Device {
   updatedAt   DateTime   @updatedAt @map("updated_at")
 user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   events      RawEvent[]
+  sessions    Session[]
 
   @@unique([userId, name])
   @@index([userId])
@@ -123,4 +128,137 @@ model ClassificationCache {
   createdAt   DateTime @default(now()) @map("created_at")
 
   @@map("classification_cache")
+}
+
+/// A consolidated focus session (design doc §6 `sessions`): the single source
+/// of truth for both the dashboard and the gamification engine (Phase 5).
+///
+/// Written by the `SessionFinalizerWorker` from `raw_events` using the 5-minute
+/// gap rule, so dashboard aggregates and XP/stat math can never disagree — they
+/// read the same rows. A row starts `open` (the worker's per-device cursor,
+/// holding the merged event snapshot in `pending`) and flips to `closed` once a
+/// confirmed gap/settle has passed; XP is awarded exactly once at that flip
+/// (unique `(device_id, started_at)` keeps open-creation and re-runs idempotent).
+model Session {
+  id                 String    @id @default(uuid())
+  deviceId           String    @map("device_id")
+  startedAt          DateTime  @db.Timestamptz @map("started_at")
+  endedAt            DateTime  @db.Timestamptz @map("ended_at")
+  /// Whole duration in minutes (rounded from the first-to-last event span).
+  durationMin        Int       @map("duration_min")
+  /// Dominant app / window title / category / source across the session's events.
+  app                String?
+  windowTitle        String?   @map("window_title")
+  category           String
+  subCategory        String?   @map("sub_category")
+  source             String
+  /// Per-app distinct-minute counts `{ app: minutes }` inside the session, so
+  /// per-app dashboard breakdowns stay accurate without touching raw events.
+  appMinutes         Json?     @map("app_minutes")
+  intentionalityScore Float?   @default(0) @map("intentionality_score")
+  /// `open` = still accumulating events (cursor); `closed` = finalized + XP paid.
+  status             String    @default("open")
+  /// Event snapshot for the open cursor, used to finalize mode/app-minutes at
+  /// close. `NULL` once the session is closed.
+  pending            Json?
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+  device             Device    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@unique([deviceId, startedAt])
+  @@index([deviceId, startedAt])
+  @@index([deviceId, status])
+  @@index([category])
+  @@index([deviceId])
+  @@map("sessions")
+}
+
+/// Per-user gamification snapshot maintained by the session finalizer (design
+/// doc §6 `user_state`). XP/level/coins are recomputed atomically whenever a
+/// session is closed; the four stats are authoritative recomputations over
+/// `sessions` served at read time, with this row as the cached baseline.
+model UserState {
+  userId       String   @id @map("user_id")
+  /// Total XP ever earned (sum of `xp_log`). No deduction — only ever grows.
+  xp           Int      @default(0)
+  level        Int      @default(1)
+  coins        Int      @default(0)
+  streakCount  Int      @map("streak_count") @default(0)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_state")
+}
+
+/// Every XP award, with a stable per-row reference so awards are idempotent
+/// (design doc §6 `xp_log`, §8.4). `source_ref` is `session:<sessionId>`,
+/// `quest:<questKey>` or `achievement:<achievementKey>` — the unique
+/// `(user_id, source_ref)` key makes a re-run a no-op instead of a double-award.
+model XpLog {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  timestamp    DateTime @db.Timestamptz
+  amount       Int
+  /// Where the XP came from: `session` | `quest` | `achievement`.
+  source       String
+  /// Stat axis the award fed: `focus` | `wisdom` | `discipline` | `restraint` | null.
+  statAffected String?  @map("stat_affected")
+  sourceRef    String   @map("source_ref")
+  createdAt    DateTime @default(now()) @map("created_at")
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, sourceRef])
+  @@index([userId, timestamp])
+  @@map("xp_log")
+}
+
+/// An auto-generated daily quest or the weekly boss fight (design doc §6
+/// `quests`, §4.3). Written and evaluated by the session finalizer; bonus XP is
+/// granted exactly once per `(user, key, period)`.
+model Quest {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  /// `daily` | `weekly`.
+  type        String
+  /// Stable machine key, e.g. `deep_work_target`, `weekly_boss`.
+  key         String
+  title       String
+  description String
+  criteria    Json
+  /// `active` | `completed` | `expired`.
+  status      String   @default("active")
+  /// Live progress payload (e.g. `{ progress, target }`) refreshed on award.
+  progress    Json?
+  rewardXp    Int      @map("reward_xp")
+  /// Day (daily) or week-start (weekly) at which the quest was born.
+  periodStart DateTime @db.Timestamptz @map("period_start")
+  periodEnd   DateTime? @db.Timestamptz @map("period_end")
+  completedAt DateTime? @map("completed_at")
+  /// Whether `rewardXp` has been paid into `xp_log`. Set atomically on award.
+  rewardGiven Boolean  @default(false) @map("reward_given")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key, periodStart])
+  @@index([userId, status])
+  @@map("quests")
+}
+
+/// A one-time badge once its condition is met (design doc §6 `achievements`,
+/// §4.3). Inserted once; the unique `(user_id, key)` is the guard.
+model Achievement {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  key         String
+  title       String
+  description String
+  unlockedAt  DateTime @map("unlocked_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
+  @@index([userId])
+  @@map("achievements")
 }

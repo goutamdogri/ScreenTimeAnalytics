@@ -732,6 +732,114 @@
           "dashboard"
         ]
       }
+    },
+    "/gamification/state": {
+      "get": {
+        "operationId": "GamificationController_getState",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GamificationStateResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "XP/level/coins/streak plus the four RPG stats",
+        "tags": [
+          "gamification"
+        ]
+      }
+    },
+    "/gamification/quests": {
+      "get": {
+        "operationId": "GamificationController_getQuests",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GamificationQuestsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Today's auto-generated daily quests and the weekly boss fight",
+        "tags": [
+          "gamification"
+        ]
+      }
+    },
+    "/gamification/achievements": {
+      "get": {
+        "operationId": "GamificationController_getAchievements",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GamificationAchievementsResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Unlocked one-time achievement badges",
+        "tags": [
+          "gamification"
+        ]
+      }
+    },
+    "/gamification/leaderboard": {
+      "get": {
+        "operationId": "GamificationController_getLeaderboard",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GamificationLeaderboardResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "\"Vs. your past self\" weekly/monthly bests",
+        "tags": [
+          "gamification"
+        ]
+      }
     }
   },
   "info": {
@@ -1423,6 +1531,314 @@
         },
         "required": [
           "sessions"
+        ]
+      },
+      "GamificationStatsDto": {
+        "type": "object",
+        "properties": {
+          "focus": {
+            "type": "number",
+            "example": 420
+          },
+          "wisdom": {
+            "type": "number",
+            "example": 180
+          },
+          "discipline": {
+            "type": "number",
+            "example": 70
+          },
+          "restraint": {
+            "type": "number",
+            "example": 50
+          }
+        },
+        "required": [
+          "focus",
+          "wisdom",
+          "discipline",
+          "restraint"
+        ]
+      },
+      "GamificationStateResponse": {
+        "type": "object",
+        "properties": {
+          "level": {
+            "type": "number",
+            "example": 4
+          },
+          "xp": {
+            "type": "number",
+            "example": 320
+          },
+          "inLevel": {
+            "type": "number",
+            "example": 220
+          },
+          "forNextLevel": {
+            "type": "number",
+            "example": 283
+          },
+          "progress": {
+            "type": "number",
+            "example": 0.78
+          },
+          "coins": {
+            "type": "number",
+            "example": 9
+          },
+          "streakDays": {
+            "type": "number",
+            "example": 3
+          },
+          "stats": {
+            "$ref": "#/components/schemas/GamificationStatsDto"
+          }
+        },
+        "required": [
+          "level",
+          "xp",
+          "inLevel",
+          "forNextLevel",
+          "progress",
+          "coins",
+          "streakDays",
+          "stats"
+        ]
+      },
+      "DailyQuestDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "deep_work_target"
+          },
+          "title": {
+            "type": "string",
+            "example": "Deep work target"
+          },
+          "description": {
+            "type": "string",
+            "example": "Reach 40 minutes of deep work today"
+          },
+          "progress": {
+            "type": "number",
+            "example": 25
+          },
+          "target": {
+            "type": "number",
+            "example": 40
+          },
+          "rewardXp": {
+            "type": "number",
+            "example": 40
+          },
+          "completed": {
+            "type": "boolean",
+            "example": false
+          },
+          "completedAt": {
+            "type": "string",
+            "example": "2026-09-17T12:00:00.000Z",
+            "nullable": true
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "description",
+          "progress",
+          "target",
+          "rewardXp",
+          "completed"
+        ]
+      },
+      "WeeklyBossDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "weekly_boss"
+          },
+          "title": {
+            "type": "string",
+            "example": "Weekly boss"
+          },
+          "description": {
+            "type": "string",
+            "example": "Defeat this week's focus boss (180 minutes of deep work)"
+          },
+          "periodStart": {
+            "type": "string",
+            "example": "2026-09-14T00:00:00.000Z"
+          },
+          "periodEnd": {
+            "type": "string",
+            "example": "2026-09-21T00:00:00.000Z"
+          },
+          "target": {
+            "type": "number",
+            "example": 180
+          },
+          "focusMinutes": {
+            "type": "number",
+            "example": 62
+          },
+          "hp": {
+            "type": "number",
+            "example": 66
+          },
+          "rewardXp": {
+            "type": "number",
+            "example": 200
+          },
+          "defeated": {
+            "type": "boolean",
+            "example": false
+          },
+          "completed": {
+            "type": "boolean",
+            "example": false
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "description",
+          "periodStart",
+          "periodEnd",
+          "target",
+          "focusMinutes",
+          "hp",
+          "rewardXp",
+          "defeated",
+          "completed"
+        ]
+      },
+      "GamificationQuestsResponse": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "example": "2026-09-17"
+          },
+          "dailyQuests": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DailyQuestDto"
+            }
+          },
+          "weeklyBoss": {
+            "$ref": "#/components/schemas/WeeklyBossDto"
+          }
+        },
+        "required": [
+          "date",
+          "dailyQuests",
+          "weeklyBoss"
+        ]
+      },
+      "AchievementDto": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "first_deep_work"
+          },
+          "title": {
+            "type": "string",
+            "example": "First deep block"
+          },
+          "description": {
+            "type": "string",
+            "example": "Complete one 20-minute deep-work session"
+          },
+          "unlockedAt": {
+            "type": "string",
+            "example": "2026-09-16T09:00:00.000Z"
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "description",
+          "unlockedAt"
+        ]
+      },
+      "GamificationAchievementsResponse": {
+        "type": "object",
+        "properties": {
+          "achievements": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AchievementDto"
+            }
+          }
+        },
+        "required": [
+          "achievements"
+        ]
+      },
+      "LeaderboardEntryDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "example": "2026-09-07"
+          },
+          "focusMinutes": {
+            "type": "number",
+            "example": 205
+          }
+        },
+        "required": [
+          "date",
+          "focusMinutes"
+        ]
+      },
+      "FocusMinutesDto": {
+        "type": "object",
+        "properties": {
+          "focusMinutes": {
+            "type": "number",
+            "example": 62
+          }
+        },
+        "required": [
+          "focusMinutes"
+        ]
+      },
+      "GamificationLeaderboardResponse": {
+        "type": "object",
+        "properties": {
+          "weeklyBest": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LeaderboardEntryDto"
+              }
+            ]
+          },
+          "monthlyBest": {
+            "nullable": true,
+            "type": "object",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/LeaderboardEntryDto"
+              }
+            ]
+          },
+          "currentWeek": {
+            "$ref": "#/components/schemas/FocusMinutesDto"
+          },
+          "currentMonth": {
+            "$ref": "#/components/schemas/FocusMinutesDto"
+          }
+        },
+        "required": [
+          "currentWeek",
+          "currentMonth"
         ]
       }
     }

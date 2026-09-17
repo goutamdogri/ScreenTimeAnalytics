@@ -12,12 +12,13 @@ import {
 } from '../components/primitives';
 import { TrendArea } from '../components/TrendCharts';
 import { SessionTimeline } from '../components/SessionTimeline';
+import type { ViewKey } from '../shell/Shell';
 
 type DashboardSummary = components['schemas']['DashboardSummaryResponse'];
 type DashboardSessions = components['schemas']['DashboardSessionsResponse'];
 type DashboardTrends = components['schemas']['DashboardTrendsResponse'];
 
-export function Overview() {
+export function Overview({ onNavigate }: { onNavigate: (key: ViewKey) => void }) {
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [sessions, setSessions] = useState<DashboardSessions['sessions']>([]);
   const [trendDays, setTrendDays] = useState<DashboardTrends['days']>([]);
@@ -116,7 +117,11 @@ export function Overview() {
         )}
       </div>
 
-      <Phase5Tile title="Achievements" note="XP, streaks, and boss encounters — coming soon." />
+      <Phase5Tile
+        title="Achievements"
+        note="XP, streaks, and boss encounters are live — open your progress."
+        onClick={() => onNavigate('progress')}
+      />
     </>
   );
 }
