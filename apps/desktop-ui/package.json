@@ -11,7 +11,10 @@
     "build:electron": "tsc -p tsconfig.electron.json",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.electron.json",
     "lint": "eslint \"src/**/*.{ts,tsx}\" \"electron/**/*.ts\" \"scripts/**/*.mjs\"",
-    "test": "vitest run"
+    "test": "vitest run",
+    "pack:linux": "pnpm build && electron-builder --linux --publish never",
+    "pack:win": "pnpm build && electron-builder --win --publish never",
+    "pack:mac": "pnpm build && electron-builder --mac --publish never"
   },
   "dependencies": {
     "@fontsource/inter": "^5.3.0",

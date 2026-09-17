@@ -38,5 +38,9 @@ Thumbs.db
 # Turbo
 .turbo/
 
+# Ops artifacts
+backups/
+release/
+
 # Notes
 notes/

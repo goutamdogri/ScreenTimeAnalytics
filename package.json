@@ -21,6 +21,8 @@
     "db:migrate": "turbo run db:migrate",
     "db:deploy": "turbo run db:deploy",
     "db:studio": "turbo run db:studio",
+    "db:backup": "bash scripts/backup.sh",
+    "db:restore": "bash scripts/restore.sh",
     "check": "pnpm lint && pnpm typecheck && pnpm build && pnpm test",
     "prepare": "husky"
   },
