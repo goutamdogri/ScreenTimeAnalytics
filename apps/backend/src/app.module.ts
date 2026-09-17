@@ -12,6 +12,8 @@ import { CryptoModule } from './modules/crypto/crypto.module';
 import { LlmModule } from './modules/llm/llm.module';
 import { ClassificationModule } from './modules/classification/classification.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { GamificationModule } from './modules/gamification/gamification.module';
+import { SessionsModule } from './modules/sessions/sessions.module';
 import { PrismaModule } from './modules/prisma/prisma.module';
 
 @Module({
@@ -31,6 +33,8 @@ import { PrismaModule } from './modules/prisma/prisma.module';
     LlmModule,
     EventsModule,
     DashboardModule,
+    GamificationModule,
+    SessionsModule,
   ],
   controllers: [AppController],
   providers: [AppService, ConfigService],

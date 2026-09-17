@@ -55,6 +55,15 @@ export function CategoriesIcon() {
   );
 }
 
+export function ProgressIcon() {
+  return (
+    <Icon>
+      <path d="M12 3l6.5 2.3v5.1c0 4.3-2.7 7.3-6.5 9.3-3.8-2-6.5-5-6.5-9.3V5.3L12 3Z" />
+      <path d="M12 7.8l1.1 2.3 2.6.3-1.9 1.8.5 2.5-2.3-1.2-2.3 1.2.5-2.5-1.9-1.8 2.6-.3L12 7.8Z" />
+    </Icon>
+  );
+}
+
 export function DevicesIcon() {
   return (
     <Icon>

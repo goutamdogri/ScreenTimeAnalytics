@@ -12,47 +12,13 @@ function bucketFor(category: string): 'focus' | 'autopilot' | 'neutral' {
   return 'neutral';
 }
 
-interface CategoryRow {
-  category: string;
-  minutes: number;
-}
-
-interface TrendRow {
-  day: string;
-  category: string;
-  minutes: number;
-}
-
-interface AppRow {
-  app: string;
-  category: string;
-  minutes: number;
-}
-
-interface FocusEventRow {
-  timestamp: Date;
-  app: string | null;
-  window_title: string | null;
-  category: string;
-  source: string;
-}
-
-function mode<T>(values: (T | null)[]): T | null {
-  const counts = new Map<T, number>();
-  let best: T | null = null;
-  let bestCount = 0;
-  for (const v of values) {
-    if (v === null) continue;
-    const c = (counts.get(v) ?? 0) + 1;
-    counts.set(v, c);
-    if (c > bestCount) {
-      bestCount = c;
-      best = v;
-    }
-  }
-  return best;
-}
-
+/**
+ * Dashboard reads — all sourced from the **closed `sessions` table**, never
+ * raw_events (design doc §6, Phase 5 decision: sessions are the single source
+ * of truth shared by the dashboard and the gamification engine, so the two can
+ * never disagree). Sessions are finalized by `SessionFinalizerWorker` within
+ * `settleMs`; closed rows are immutable.
+ */
 @Injectable()
 export class DashboardService {
   constructor(private readonly prisma: PrismaService) {}
@@ -65,60 +31,21 @@ export class DashboardService {
     const dayStart = bounds.start;
     const dayEnd = bounds.end;
 
-    const [totalRow, categoryRows, sessionCountRow, activeDevicesRow] = await Promise.all([
-      this.prisma.$queryRaw<[{ minutes: number }]>`
-        SELECT COUNT(DISTINCT date_trunc('minute', re.timestamp))::int AS minutes
-        FROM raw_events re
-        JOIN devices d ON re.device_id = d.id
-        WHERE d.user_id = ${userId}
-          AND re.timestamp >= ${dayStart}
-          AND re.timestamp < ${dayEnd}
-          AND re.event_type = 'focus'
-          AND re.category IS NOT NULL
-          AND re.category != 'idle_afk'
-      `,
-      this.prisma.$queryRaw<CategoryRow[]>`
-        SELECT re.category,
-               COUNT(DISTINCT date_trunc('minute', re.timestamp))::int AS minutes
-        FROM raw_events re
-        JOIN devices d ON re.device_id = d.id
-        WHERE d.user_id = ${userId}
-          AND re.timestamp >= ${dayStart}
-          AND re.timestamp < ${dayEnd}
-          AND re.event_type = 'focus'
-          AND re.category IS NOT NULL
-          AND re.category != 'idle_afk'
-        GROUP BY re.category
-      `,
-      this.prisma.$queryRaw<[{ count: number }]>`
-        SELECT COUNT(*)::int AS count FROM (
-          SELECT date_trunc('minute', re.timestamp) AS ts,
-                 LAG(date_trunc('minute', re.timestamp)) OVER (ORDER BY re.timestamp) AS prev_ts
-          FROM raw_events re
-          JOIN devices d ON re.device_id = d.id
-          WHERE d.user_id = ${userId}
-            AND re.timestamp >= ${dayStart}
-            AND re.timestamp < ${dayEnd}
-            AND re.event_type = 'focus'
-            AND re.category != 'idle_afk'
-        ) sub
-        WHERE prev_ts IS NULL OR ts - prev_ts > INTERVAL '5 minutes'
-      `,
-      this.prisma.$queryRaw<[{ count: number }]>`
-        SELECT COUNT(DISTINCT re.device_id)::int AS count
-        FROM raw_events re
-        JOIN devices d ON re.device_id = d.id
-        WHERE d.user_id = ${userId}
-          AND re.timestamp >= ${dayStart}
-          AND re.timestamp < ${dayEnd}
-          AND re.event_type = 'focus'
-      `,
-    ]);
+    const sessions = await this.prisma.session.findMany({
+      where: {
+        device: { userId },
+        status: 'closed',
+        startedAt: { gte: dayStart, lt: dayEnd },
+      },
+      select: { durationMin: true, category: true, deviceId: true },
+    });
 
-    const totalMinutes = totalRow[0]?.minutes ?? 0;
+    const totalMinutes = sessions.reduce((sum, s) => sum + s.durationMin, 0);
     const buckets = { focus: 0, autopilot: 0, neutral: 0 };
-    for (const row of categoryRows) {
-      buckets[bucketFor(row.category)] += row.minutes;
+    const byCategoryMap = new Map<string, number>();
+    for (const s of sessions) {
+      buckets[bucketFor(s.category)] += s.durationMin;
+      byCategoryMap.set(s.category, (byCategoryMap.get(s.category) ?? 0) + s.durationMin);
     }
 
     return {
@@ -127,55 +54,56 @@ export class DashboardService {
       focusMinutes: buckets.focus,
       autopilotMinutes: buckets.autopilot,
       neutralMinutes: buckets.neutral,
-      byCategory: categoryRows.map((r) => ({
-        category: r.category,
-        minutes: r.minutes,
-        share: totalMinutes > 0 ? Number((r.minutes / totalMinutes).toFixed(4)) : 0,
+      byCategory: Array.from(byCategoryMap.entries()).map(([category, minutes]) => ({
+        category,
+        minutes,
+        share: totalMinutes > 0 ? Number((minutes / totalMinutes).toFixed(4)) : 0,
       })),
-      sessionCount: sessionCountRow[0]?.count ?? 0,
-      activeDevices: activeDevicesRow[0]?.count ?? 0,
+      sessionCount: sessions.length,
+      activeDevices: new Set(sessions.map((s) => s.deviceId)).size,
     };
   }
 
   async getTrends(userId: string, range: string, tz: string) {
     const days = RANGE_DAYS[range] ?? 7;
-    const rangeStart = await this.prisma.$queryRaw<[{ start: Date }]>`
-      SELECT (NOW() AT TIME ZONE ${tz} - ${days}::int * INTERVAL '1 day')::timestamptz AS start
-    `;
-    const from = rangeStart[0].start;
-    const to = await this.prisma.$queryRaw<[{ now: Date }]>`
-      SELECT (NOW() AT TIME ZONE ${tz})::timestamptz AS now
-    `;
-    const end = to[0].now;
+    const [fromRow, toRow] = await Promise.all([
+      this.prisma.$queryRaw<[{ start: Date }]>`
+        SELECT (NOW() AT TIME ZONE ${tz} - ${days}::int * INTERVAL '1 day')::timestamptz AS start
+      `,
+      this.prisma.$queryRaw<[{ now: Date }]>`
+        SELECT (NOW() AT TIME ZONE ${tz})::timestamptz AS now
+      `,
+    ]);
+    const from = fromRow[0].start;
+    const end = toRow[0].now;
 
-    const rows = await this.prisma.$queryRaw<TrendRow[]>`
-      SELECT date_trunc('day', re.timestamp AT TIME ZONE ${tz})::date::text AS day,
-             re.category,
-             COUNT(DISTINCT date_trunc('minute', re.timestamp))::int AS minutes
-      FROM raw_events re
-      JOIN devices d ON re.device_id = d.id
-      WHERE d.user_id = ${userId}
-        AND re.timestamp >= ${from}
-        AND re.timestamp < ${end}
-        AND re.event_type = 'focus'
-        AND re.category IS NOT NULL
-        AND re.category != 'idle_afk'
-      GROUP BY day, re.category
-      ORDER BY day
-    `;
+    const sessions = await this.prisma.session.findMany({
+      where: {
+        device: { userId },
+        status: 'closed',
+        startedAt: { gte: from, lt: end },
+      },
+      select: { startedAt: true, durationMin: true, category: true },
+    });
 
     const byDay = new Map<
       string,
       { totalMinutes: number; byCategory: { category: string; minutes: number }[] }
     >();
-    for (const r of rows) {
-      let bucket = byDay.get(r.day);
+    for (const s of sessions) {
+      const day = s.startedAt.toISOString().slice(0, 10);
+      let bucket = byDay.get(day);
       if (!bucket) {
         bucket = { totalMinutes: 0, byCategory: [] };
-        byDay.set(r.day, bucket);
+        byDay.set(day, bucket);
       }
-      bucket.totalMinutes += r.minutes;
-      bucket.byCategory.push({ category: r.category, minutes: r.minutes });
+      bucket.totalMinutes += s.durationMin;
+      const existing = bucket.byCategory.find((c) => c.category === s.category);
+      if (existing) {
+        existing.minutes += s.durationMin;
+      } else {
+        bucket.byCategory.push({ category: s.category, minutes: s.durationMin });
+      }
     }
 
     return {
@@ -200,125 +128,76 @@ export class DashboardService {
     const from = fromRow[0].start;
     const end = toRow[0].now;
 
-    const [categoryRows, appRows] = await Promise.all([
-      this.prisma.$queryRaw<CategoryRow[]>`
-        SELECT re.category,
-               COUNT(DISTINCT date_trunc('minute', re.timestamp))::int AS minutes
-        FROM raw_events re
-        JOIN devices d ON re.device_id = d.id
-        WHERE d.user_id = ${userId}
-          AND re.timestamp >= ${from}
-          AND re.timestamp < ${end}
-          AND re.event_type = 'focus'
-          AND re.category IS NOT NULL
-          AND re.category != 'idle_afk'
-        GROUP BY re.category
-        ORDER BY minutes DESC
-      `,
-      this.prisma.$queryRaw<AppRow[]>`
-        SELECT re.app, re.category,
-               COUNT(DISTINCT date_trunc('minute', re.timestamp))::int AS minutes
-        FROM raw_events re
-        JOIN devices d ON re.device_id = d.id
-        WHERE d.user_id = ${userId}
-          AND re.timestamp >= ${from}
-          AND re.timestamp < ${end}
-          AND re.event_type = 'focus'
-          AND re.app IS NOT NULL
-          AND re.category IS NOT NULL
-          AND re.category != 'idle_afk'
-        GROUP BY re.app, re.category
-      `,
-    ]);
+    const sessions = await this.prisma.session.findMany({
+      where: {
+        device: { userId },
+        status: 'closed',
+        startedAt: { gte: from, lt: end },
+      },
+      select: { durationMin: true, category: true, appMinutes: true, app: true },
+    });
 
-    const totalMinutes = categoryRows.reduce((sum, r) => sum + r.minutes, 0);
-    const appsByCategory = new Map<string, { app: string; minutes: number }[]>();
-    for (const r of appRows) {
-      const list = appsByCategory.get(r.category) ?? [];
-      list.push({ app: r.app, minutes: r.minutes });
-      appsByCategory.set(r.category, list);
-    }
-    for (const list of appsByCategory.values()) {
-      list.sort((a, b) => b.minutes - a.minutes);
-      list.splice(5);
+    const categoryMap = new Map<string, number>();
+    const appsByCategory = new Map<string, Map<string, number>>();
+    for (const s of sessions) {
+      categoryMap.set(s.category, (categoryMap.get(s.category) ?? 0) + s.durationMin);
+      const perCategory = appsByCategory.get(s.category) ?? new Map<string, number>();
+      appsByCategory.set(s.category, perCategory);
+      if (typeof s.appMinutes === 'object' && s.appMinutes !== null) {
+        for (const [app, minutes] of Object.entries(s.appMinutes)) {
+          perCategory.set(app, (perCategory.get(app) ?? 0) + (Number(minutes) || 0));
+        }
+      } else if (s.app) {
+        perCategory.set(s.app, (perCategory.get(s.app) ?? 0) + s.durationMin);
+      }
     }
 
-    return {
-      range,
-      totals: categoryRows.map((r) => ({
-        category: r.category,
-        minutes: r.minutes,
-        share: totalMinutes > 0 ? Number((r.minutes / totalMinutes).toFixed(4)) : 0,
-        topApps: appsByCategory.get(r.category) ?? [],
-      })),
-    };
+    const totalMinutes = Array.from(categoryMap.values()).reduce((sum, m) => sum + m, 0);
+    const totals = Array.from(categoryMap.entries())
+      .map(([category, minutes]) => {
+        const top = Array.from((appsByCategory.get(category) ?? new Map()).entries())
+          .map(([app, appMinutes]) => ({ app, minutes: appMinutes }))
+          .sort((a, b) => b.minutes - a.minutes)
+          .slice(0, 5);
+        return {
+          category,
+          minutes,
+          share: totalMinutes > 0 ? Number((minutes / totalMinutes).toFixed(4)) : 0,
+          topApps: top,
+        };
+      })
+      .sort((a, b) => b.minutes - a.minutes);
+
+    return { range, totals };
   }
 
   async getSessions(userId: string, from: string, to: string) {
-    const events = await this.prisma.$queryRaw<FocusEventRow[]>`
-      SELECT re.timestamp, re.app, re.window_title, re.category, re.source
-      FROM raw_events re
-      JOIN devices d ON re.device_id = d.id
-      WHERE d.user_id = ${userId}
-        AND re.timestamp >= ${new Date(from)}
-        AND re.timestamp < ${new Date(to)}
-        AND re.event_type = 'focus'
-        AND re.category IS NOT NULL
-        AND re.category != 'idle_afk'
-      ORDER BY re.timestamp ASC
-    `;
+    const sessions = await this.prisma.session.findMany({
+      where: {
+        device: { userId },
+        status: 'closed',
+        startedAt: { gte: new Date(from), lt: new Date(to) },
+      },
+      orderBy: { startedAt: 'asc' },
+      select: {
+        startedAt: true,
+        endedAt: true,
+        durationMin: true,
+        app: true,
+        windowTitle: true,
+        category: true,
+        source: true,
+      },
+    });
 
-    const GAP_MS = 5 * 60 * 1000;
-    const sessions: {
-      startedAt: Date;
-      endedAt: Date;
-      durationMin: number;
-      app: string | null;
-      windowTitle: string | null;
-      category: string;
-      source: string;
-    }[] = [];
-
-    if (events.length === 0) return sessions;
-
-    let current: { start: FocusEventRow; end: FocusEventRow; batch: FocusEventRow[] } | null = null;
-    for (const event of events) {
-      if (current === null) {
-        current = { start: event, end: event, batch: [event] };
-        continue;
-      }
-      const gap = event.timestamp.getTime() - current.end.timestamp.getTime();
-      if (gap > GAP_MS) {
-        sessions.push(finalizeSession(current.batch));
-        current = { start: event, end: event, batch: [event] };
-      } else {
-        current.end = event;
-        current.batch.push(event);
-      }
-    }
-    if (current) {
-      sessions.push(finalizeSession(current.batch));
-    }
-    return sessions;
+    return sessions.map((s) => ({
+      startedAt: s.startedAt,
+      endedAt: s.endedAt,
+      durationMin: s.durationMin,
+      app: s.app,
+      windowTitle: s.windowTitle,
+      category: s.category,
+      source: s.source,
+    }));
   }
-}
-
-function finalizeSession(batch: FocusEventRow[]) {
-  const first = batch[0] ?? batch[1];
-  const last = batch[batch.length - 1];
-  if (!first || !last) {
-    throw new Error('finalizeSession called with an empty batch');
-  }
-  return {
-    startedAt: first.timestamp,
-    endedAt: last.timestamp,
-    durationMin: Math.max(
-      1,
-      Math.round((last.timestamp.getTime() - first.timestamp.getTime()) / 60000),
-    ),
-    app: mode(batch.map((e) => e.app)),
-    windowTitle: mode(batch.map((e) => e.window_title)),
-    category: mode(batch.map((e) => e.category)) ?? 'other',
-    source: mode(batch.map((e) => e.source)) ?? 'x11',
-  };
 }

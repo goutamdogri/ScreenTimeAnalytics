@@ -1,6 +1,8 @@
 import { INestApplication } from '@nestjs/common';
 import request from 'supertest';
 import { bootstrap } from '../src/main';
+import { SessionsFinalizerService } from '../src/modules/sessions/sessions.finalizer.service';
+import { PrismaService } from '../src/modules/prisma/prisma.service';
 
 jest.setTimeout(30_000);
 
@@ -77,31 +79,40 @@ describe('dashboard (e2e)', () => {
     expect(res.body).toEqual({ accepted: 3, duplicates: 0 });
   });
 
+  // The SessionFinalizerWorker is disabled in e2e; materialize the sessions
+  // deterministically by invoking the finalizer directly (settle=1ms closes
+  // the freshly-seeded window immediately).
+  async function finalizeSessions(): Promise<void> {
+    const prisma = app.get(PrismaService);
+    const finalizer = app.get(SessionsFinalizerService);
+    const device = await prisma.device.findFirst({
+      where: { deviceToken },
+      select: { id: true },
+    });
+    await finalizer.finalizeDevice(device!.id);
+  }
+
   it('GET /dashboard/summary → totals, intentionality split, categories', async () => {
+    await finalizeSessions();
+
     const res = await request(app.getHttpServer())
       .get(`/dashboard/summary?date=${today}&tz=UTC`)
       .set('Authorization', `Bearer ${accessToken}`)
       .expect(200);
 
     expect(res.body.date).toBe(today);
-    expect(res.body.totalMinutes).toBeGreaterThanOrEqual(3);
+    // The three events are one 5-minute-gap-window → a single deep_work session
+    // whose full duration is attributed to its dominant (modal) category.
+    expect(res.body.totalMinutes).toBeGreaterThanOrEqual(1);
     expect(res.body.focusMinutes).toBeGreaterThanOrEqual(1);
-    expect(res.body.neutralMinutes).toBeGreaterThanOrEqual(2);
     expect(res.body.byCategory).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ category: 'deep_work' }),
-        expect.objectContaining({ category: 'communication' }),
-        expect.objectContaining({ category: 'music_audio' }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ category: 'deep_work' })]),
     );
     expect(res.body.sessionCount).toBeGreaterThan(0);
     expect(res.body.activeDevices).toBe(1);
   });
 
-  it('GET /dashboard/summary with non-UTC tz → buckets events into the correct local day', async () => {
-    // Regression: the day boundary must be local midnight in the given tz, not
-    // shifted by the tz offset. The seeded events land within the last few
-    // minutes, so compute the Asia/Kolkata date they fall on deterministically.
+  it('GET /dashboard/summary with non-UTC tz → buckets sessions into the correct local day', async () => {
     const kolkataDate = new Date(new Date(focusBatch[0]!.timestamp).getTime() + 5.5 * 3600 * 1000)
       .toISOString()
       .slice(0, 10);
@@ -112,14 +123,10 @@ describe('dashboard (e2e)', () => {
       .expect(200);
 
     expect(res.body.date).toBe(kolkataDate);
-    expect(res.body.totalMinutes).toBeGreaterThanOrEqual(3);
+    expect(res.body.totalMinutes).toBeGreaterThanOrEqual(1);
     expect(res.body.sessionCount).toBe(1);
     expect(res.body.byCategory).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({ category: 'deep_work' }),
-        expect.objectContaining({ category: 'communication' }),
-        expect.objectContaining({ category: 'music_audio' }),
-      ]),
+      expect.arrayContaining([expect.objectContaining({ category: 'deep_work' })]),
     );
   });
 

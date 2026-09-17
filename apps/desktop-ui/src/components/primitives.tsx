@@ -180,7 +180,29 @@ export function EmptyState({
   );
 }
 
-export function Phase5Tile({ title, note }: { title: string; note: string }) {
+export function Phase5Tile({
+  title,
+  note,
+  onClick,
+}: {
+  title: string;
+  note: string;
+  onClick?: () => void;
+}) {
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        className="phase5 clickable"
+        onClick={onClick}
+        data-testid="phase5-tile"
+      >
+        <div className="phase5-chip">Phase 5</div>
+        <div className="phase5-title">{title}</div>
+        <div className="phase5-note">{note}</div>
+      </button>
+    );
+  }
   return (
     <div className="phase5" data-testid="phase5-tile">
       <div className="phase5-chip">Phase 5</div>
