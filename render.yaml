@@ -1,0 +1,40 @@
+# Render blueprint — one-click deploy of the backend + managed Postgres.
+#
+# Usage: Render dashboard → New → Blueprint → connect the GitHub repo.
+# After the first deploy, fill in the `sync: false` env vars below (Render
+# flags them as "set in the dashboard"):
+#   - JWT_ACCESS_SECRET / JWT_REFRESH_SECRET : openssl rand -base64 48
+#   - ENCRYPTION_MASTER_KEY                   : openssl rand -base64 32
+# Then add your Groq API key in the app's Settings screen (stored encrypted).
+#
+# Alternatively paste the secrets into the blueprint before runtime
+# (individual services → Environment → Secret Files / Env Vars).
+services:
+  - type: web
+    name: screen-time-backend
+    runtime: docker
+    dockerfilePath: apps/backend/Dockerfile
+    plan: starter
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: screen-time-postgres
+          property: connectionString
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: ENCRYPTION_MASTER_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        # Replace with your deployed Desktop UI / web client origin(s).
+        value: http://localhost:5173
+
+databases:
+  - name: screen-time-postgres
+    databaseName: screen_time
+    plan: starter

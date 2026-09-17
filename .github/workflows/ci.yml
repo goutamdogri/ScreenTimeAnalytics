@@ -49,3 +49,11 @@ jobs:
       - run: pnpm build
       - run: pnpm test
       - run: pnpm test:e2e
+
+      # Design doc §2.6 / §8.3 — the build above regenerates the API contract
+      # from the backend's live OpenAPI spec; any drift must fail the PR.
+      - name: Contract check (regen is empty, frontend compiles against it)
+        run: |
+          pnpm exec turbo run generate:openapi
+          git diff --exit-code -- packages/api-contract/openapi.json \
+            || { echo "::error::API contract drift — regenerate and commit packages/api-contract/openapi.json"; exit 1; }

@@ -1,0 +1,16 @@
+[Unit]
+Description=Screen Time Desktop Agent
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User={{USER}}
+EnvironmentFile=/etc/screen-time-agent.env
+WorkingDirectory=/opt/screen-time-agent
+ExecStart=/usr/bin/node dist/cli.js run
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

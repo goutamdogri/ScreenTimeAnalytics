@@ -1,43 +1,56 @@
-version: '3.8'
-
 services:
   db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_USER: screen
-      POSTGRES_PASSWORD: screen
-      POSTGRES_DB: screen_time
+      POSTGRES_USER: ${POSTGRES_USER:-screen}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-screen}
+      POSTGRES_DB: ${POSTGRES_DB:-screen_time}
     ports:
-      - '5432:5432'
+      - '${POSTGRES_PORT:-5432}:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ['CMD-SHELL', 'pg_isready -U screen -d screen_time']
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-screen} -d ${POSTGRES_DB:-screen_time}']
       interval: 5s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   backend:
     build:
       context: .
       dockerfile: apps/backend/Dockerfile
     ports:
-      - '3000:3000'
+      - '${BACKEND_PORT:-3000}:3000'
+    env_file:
+      - path: .env
+        required: false
     environment:
-      DATABASE_URL: postgresql://screen:screen@db:5432/screen_time?schema=public
-      JWT_ACCESS_SECRET: change-me-in-production-access
-      JWT_REFRESH_SECRET: change-me-in-production-refresh
-      JWT_ACCESS_TTL: 15m
-      JWT_REFRESH_TTL: 7d
+      DATABASE_URL: postgresql://${POSTGRES_USER:-screen}:${POSTGRES_PASSWORD:-screen}@db:5432/${POSTGRES_DB:-screen_time}?schema=public
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-dev-insecure-jwt-access-secret-change-me}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-dev-insecure-jwt-refresh-secret-change-me}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-15m}
+      JWT_REFRESH_TTL: ${JWT_REFRESH_TTL:-7d}
       PORT: '3000'
-      NODE_ENV: development
-      ENCRYPTION_MASTER_KEY: change-me-32-byte-base64-master-key
-      LLM_OLLAMA_URL: http://host.docker.internal:11434
-      CLASSIFICATION_POLL_MS: '30000'
-      CLASSIFICATION_BATCH_SIZE: '50'
+      NODE_ENV: ${NODE_ENV:-development}
+      ENCRYPTION_MASTER_KEY: ${ENCRYPTION_MASTER_KEY:-change-me-32-byte-base64-master-key}
+      LLM_OLLAMA_URL: ${LLM_OLLAMA_URL:-http://host.docker.internal:11434}
+      CLASSIFICATION_POLL_MS: ${CLASSIFICATION_POLL_MS:-30000}
+      CLASSIFICATION_BATCH_SIZE: ${CLASSIFICATION_BATCH_SIZE:-50}
     depends_on:
       db:
         condition: service_healthy
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "fetch(\"http://127.0.0.1:3000/health\").then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"',
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    restart: unless-stopped
 
 volumes:
   postgres_data:

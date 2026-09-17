@@ -11,6 +11,7 @@ export async function bootstrap(): Promise<INestApplication> {
   const app = await NestFactory.create(AppModule, {
     logger: ['log', 'error', 'warn', 'debug', 'verbose'],
   });
+  app.enableShutdownHooks();
   const config = app.get(ConfigService);
   const logger = new Logger('Bootstrap');
 

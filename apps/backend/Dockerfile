@@ -36,7 +36,14 @@ COPY --from=builder /app/packages/db/node_modules ./packages/db/node_modules
 # Needed by backend config validation
 COPY .env.example .env.example
 
+RUN chown -R node:node /app
+
 ENV NODE_ENV=production
 EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+  CMD node -e "const base='http://127.0.0.1:'+(process.env.PORT||3000);fetch(base+'/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
+
+USER node
 
 CMD ["node", "apps/backend/dist/main.js"]

@@ -158,9 +158,14 @@ describe('SyncEngine', () => {
         now: () => fixedNow,
       });
       engine.start();
-      await new Promise((r) => setTimeout(r, 10));
+      let count = 1;
+      const deadline = Date.now() + 1000;
+      while (count !== 0 && Date.now() < deadline) {
+        await new Promise((r) => setTimeout(r, 5));
+        count = await buffer.count();
+      }
       engine.stop();
-      expect(await buffer.count()).toBe(0);
+      expect(count).toBe(0);
     });
   });
 });

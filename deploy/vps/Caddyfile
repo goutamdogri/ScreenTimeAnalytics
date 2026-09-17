@@ -1,0 +1,7 @@
+# Caddy reverse proxy for the VPS deployment (docker-compose.prod.yml).
+#
+# Replace app.example.com with your domain and point a DNS A record at the VPS.
+# Caddy obtains and renews HTTPS certificates automatically.
+app.example.com {
+    reverse_proxy backend:3000
+}

@@ -1,0 +1,65 @@
+# Production Compose stack for a VPS (or any Docker host with a public IP).
+#   backend  : ghcr.io image (see .github/workflows/publish-image.yml)
+#   db       : Postgres 16, DB port NOT exposed to the host
+#   caddy    : reverse proxy, automatic HTTPS (free certs), single entry point
+#
+# Setup (see docs/ops/deployment.md §VPS):
+#   cp .env.example .env                       # then fill POSTGRES_* + secrets
+#   sudo docker compose -f docker-compose.prod.yml up -d
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-screen_time}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    image: ${BACKEND_IMAGE:-ghcr.io/goutamdogri/ScreenTimeAnalytics/screen-time-backend:latest}
+    ports:
+      - '${BACKEND_PORT:-3000}:3000'
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
+      NODE_ENV: production
+      LLM_OLLAMA_URL: http://localhost:11434
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - 'CMD-SHELL'
+        - 'node -e "fetch(\"http://127.0.0.1:3000/health\").then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"'
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - '80:80'
+      - '443:443'
+      - '443:443/udp'
+    volumes:
+      - ./deploy/vps/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  caddy_data:
+  caddy_config:
