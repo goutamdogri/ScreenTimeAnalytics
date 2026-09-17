@@ -1,6 +1,12 @@
-import type { ActiveWindowInfo } from '@screen-time/adapters';
-import { createIdleProbe, createMprisBus, MprisAdapter, X11Adapter } from '@screen-time/adapters';
+import type { ActiveWindowInfo, PlatformAdapter } from '@screen-time/adapters';
+import type { EventSource } from '@screen-time/core';
 
+import {
+  createAdapters,
+  type AdapterSet,
+  type AdapterSource,
+  type MediaSource,
+} from './adapter-factory';
 import { ApiClient } from './api-client';
 import { AuthClient } from './auth';
 import { EventBuffer } from './buffer';
@@ -22,7 +28,7 @@ export interface AgentAppOptions {
   /** Injectable spool (tests replace this). */
   buffer?: EventBuffer;
   /** Injectable adapter factory — tests return fakes. */
-  adapters?: () => Promise<{ x11: X11Adapter; mpris: MprisAdapter | null }>;
+  adapters?: () => Promise<AdapterSet>;
   /** Injectable clock. */
   now?: () => Date;
 }
@@ -38,17 +44,24 @@ export class AgentApp {
   private readonly store: FileAgentStore;
   private readonly api: ApiClient;
   private readonly buffer: EventBuffer;
-  private readonly adapters: () => Promise<{ x11: X11Adapter; mpris: MprisAdapter | null }>;
+  private readonly adapters: () => Promise<AdapterSet>;
   private readonly now: () => Date;
 
-  private x11: X11Adapter | null = null;
-  private mpris: MprisAdapter | null = null;
+  private active: PlatformAdapter | null = null;
+  private media: PlatformAdapter | null = null;
+  private activeSource: AdapterSource = 'none';
+  private mediaSource: MediaSource = null;
   private sync: SyncEngine | null = null;
   private localServer: LocalServer | null = null;
   private captureTimer: ReturnType<typeof setInterval> | null = null;
   private lastWindow: ActiveWindowInfo | null = null;
   private started = false;
   private disposed = false;
+
+  /** Capture label for diagnostics, e.g. `x11+mpris` or `windows+smtc`. */
+  get captureLabel(): string {
+    return `${this.activeSource}+${this.mediaSource ?? 'none'}`;
+  }
 
   constructor(opts: AgentAppOptions) {
     this.config = opts.config;
@@ -57,7 +70,7 @@ export class AgentApp {
     this.store = opts.store ?? new FileAgentStore(`${opts.config.configDir}/agent.json`);
     this.api = opts.api ?? new ApiClient(opts.config.apiBaseUrl);
     this.buffer = opts.buffer ?? new EventBuffer(opts.config.spoolDir);
-    this.adapters = opts.adapters ?? (() => defaultAdapters(this.config, this.logger));
+    this.adapters = opts.adapters ?? (() => createAdapters(this.config, this.logger));
   }
 
   async start(): Promise<{ deviceId: string }> {
@@ -67,23 +80,29 @@ export class AgentApp {
     const auth = new AuthClient(this.api, this.store);
     const accessToken = await auth.ensureAccessToken();
 
-    const registrar = new DeviceRegistrar(this.api, this.store, this.config);
+    const adapters = await this.adapters();
+    const registrar = new DeviceRegistrar(this.api, this.store, this.config, adapters.platform);
     const { deviceId, deviceToken } = await registrar.ensureDeviceToken(accessToken);
     this.logger.info('device_ready', { deviceId });
 
-    const adapters = await this.adapters();
-    this.x11 = adapters.x11;
-    this.mpris = adapters.mpris;
+    this.active = adapters.active;
+    this.media = adapters.media;
+    this.activeSource = adapters.activeSource;
+    this.mediaSource = adapters.mediaSource;
 
-    this.x11.onIdleChanged((idle) => {
-      void this.buffer.append(idleEvent(this.now().toISOString(), idle));
+    this.active.onIdleChanged((idle) => {
+      void this.buffer.append(
+        idleEvent(this.now().toISOString(), idle, this.activeSource as EventSource),
+      );
     });
-    this.mpris?.onMediaChanged((np) => {
-      void this.buffer.append(mediaEvent(this.now().toISOString(), np));
+    this.media?.onMediaChanged((np) => {
+      void this.buffer.append(
+        mediaEvent(this.now().toISOString(), np, (this.mediaSource ?? 'mpris') as EventSource),
+      );
     });
 
-    this.x11.start();
-    this.mpris?.start();
+    this.active.start();
+    this.media?.start();
 
     this.captureTimer = setInterval(() => void this.captureFocusTick(), this.config.pollIntervalMs);
     this.captureTimer.unref();
@@ -130,15 +149,15 @@ export class AgentApp {
     this.localServer = null;
     if (localServer) await localServer.stop().catch(() => {});
 
-    this.x11?.dispose();
-    this.mpris?.dispose();
-    this.x11 = null;
-    this.mpris = null;
+    this.active?.dispose();
+    this.media?.dispose();
+    this.active = null;
+    this.media = null;
   }
 
   private async captureFocusTick(): Promise<void> {
-    if (!this.x11) return;
-    const window = this.x11.getActiveWindow();
+    if (!this.active) return;
+    const window = this.active.getActiveWindow();
     if (window === null) {
       this.lastWindow = null;
       return;
@@ -149,29 +168,10 @@ export class AgentApp {
       this.lastWindow.processName === window.processName;
     if (sameAsLast) return;
 
-    const event = focusEvent(this.now().toISOString(), window);
+    const event = focusEvent(this.now().toISOString(), window, this.activeSource as EventSource);
     await this.buffer.append(event);
     this.lastWindow = window;
   }
-}
-
-async function defaultAdapters(
-  config: AgentConfig,
-  logger: AgentLogger,
-): Promise<{ x11: X11Adapter; mpris: MprisAdapter | null }> {
-  const idleProbe = await createIdleProbe(logger);
-  const x11 = new X11Adapter({
-    idleProbe,
-    pollIntervalMs: config.pollIntervalMs,
-    idleThresholdMs: config.idleThresholdMs,
-    logger,
-  });
-
-  const mprisBus = await createMprisBus(logger);
-  const mpris: MprisAdapter | null =
-    mprisBus === null ? null : new MprisAdapter({ bus: mprisBus, logger });
-
-  return { x11, mpris };
 }
 
 export { AuthClient, DeviceRegistrar };

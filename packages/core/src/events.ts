@@ -7,12 +7,15 @@
 /**
  * Canonical origin of a raw activity event (design doc §6 `raw_events.source`).
  *
- * `x11` = active-window focus/state captured by the X11 adapter, `mpris` =
- * now-playing media from MPRIS, `extension` = browser tab browse events posted
- * to the agent's localhost server. The backend validates ingestion against this
- * set, so it lives here (pure core) rather than in the backend or agent.
+ * `x11`/`wayland`/`windows` = active-window focus/state captured by the
+ * matching platform adapter, `mpris` = now-playing media from MPRIS (Linux),
+ * `smtc` = now-playing media from Windows System Media Transport Controls,
+ * `extension` = browser tab browse events posted to the agent's localhost
+ * server. The backend validates ingestion against this set, so it lives here
+ * (pure core) rather than in the backend or agent. Source values are additive
+ * — Phase 6 (platform expansion) widened this list to cover the new adapters.
  */
-export const EVENT_SOURCES = ['x11', 'mpris', 'extension'] as const;
+export const EVENT_SOURCES = ['x11', 'mpris', 'extension', 'wayland', 'windows', 'smtc'] as const;
 export type EventSource = (typeof EVENT_SOURCES)[number];
 
 /**

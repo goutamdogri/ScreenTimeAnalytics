@@ -1,15 +1,7 @@
-import type { MessageBus } from 'dbus-next';
 import { AdapterLogger, SILENT_LOGGER, errorMessage } from '../logger';
+import { SessionBus, toSessionBus } from './session-bus';
 
-/**
- * Structural view of the D-Bus session bus that the idle probe and MPRIS
- * adapter depend on. Production instances wrap `dbus-next`'s `MessageBus`;
- * tests inject fakes.
- */
-export interface SessionBus {
-  call(message: unknown): Promise<{ body: unknown[] }>;
-  disconnect(): void;
-}
+export type { SessionBus };
 
 export interface IdleProbe {
   getIdleTimeMs(): Promise<number>;
@@ -22,16 +14,6 @@ export interface MprisBus {
   /** Returns raw Metadata properties, or an empty object on failure. */
   getPlayerMetadata(playerBusName: string): Promise<Record<string, unknown>>;
   dispose(): void;
-}
-
-function toSessionBus(bus: MessageBus): SessionBus {
-  return {
-    async call(message) {
-      const reply = await bus.call(message as Parameters<MessageBus['call']>[0]);
-      return reply ? { body: reply.body ?? [] } : { body: [] };
-    },
-    disconnect: () => bus.disconnect(),
-  };
 }
 
 /**

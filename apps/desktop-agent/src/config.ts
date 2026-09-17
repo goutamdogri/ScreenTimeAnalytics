@@ -10,9 +10,13 @@ import { join, resolve } from 'node:path';
  *   3. environment variables `STA_*`
  */
 export interface AgentConfig {
-  /** The platform identity reported when registering a device. */
   apiBaseUrl: string;
   deviceName: string;
+  /**
+   * Platform identity reported when registering a device. `auto` resolves
+   * from `process.platform` + `XDG_SESSION_TYPE`; any known platform string
+   * (`linux-x11`, `linux-wayland`, `windows`, `macos`, `unknown`) overrides.
+   */
   platform: string;
   /** How often the X11 window capture loop polls (ms). */
   pollIntervalMs: number;
@@ -60,7 +64,7 @@ export function configStorePath(configDir: string): string {
 export const DEFAULT_CONFIG: AgentConfig = {
   apiBaseUrl: 'http://localhost:3000',
   deviceName: 'workstation',
-  platform: 'linux-x11',
+  platform: 'auto',
   pollIntervalMs: 2000,
   idleThresholdMs: 60_000,
   syncIntervalMs: 10_000,
